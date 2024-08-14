@@ -11,11 +11,9 @@ namespace EntBossHP
         public override string ModuleVersion => "1.0";
         public override string ModuleAuthor => "Oylsister, Kxrnl";
 
-        public Dictionary<CCSPlayerController, float> ClientLastShootHitBox = new Dictionary<CCSPlayerController, float>();
-        public Dictionary<CCSPlayerController, CEntityInstance> ClientEntityHit = new Dictionary<CCSPlayerController, CEntityInstance>();
-        public Dictionary<CCSPlayerController, string> ClientEntityNameHit = new Dictionary<CCSPlayerController, string>();
-        public float CurrentTime;
-        public float LastForceShowBossHP;
+        public Dictionary<CCSPlayerController, ClientDisplayData> ClientDisplayDatas { get; set; } = new Dictionary<CCSPlayerController, ClientDisplayData>();
+        public double CurrentTime;
+        public double LastForceShowBossHP;
 
         public override void Load(bool hotReload)
         {
@@ -27,6 +25,7 @@ namespace EntBossHP
 
             RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
             RegisterListener<Listeners.OnClientDisconnect>(OnClientDisconnect);
+            RegisterListener<Listeners.OnTick>(OnGameFrame);
         }
 
         public HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
@@ -34,10 +33,7 @@ namespace EntBossHP
             if (@event.Userid.IsBot || @event.Userid.IsHLTV)
                 return HookResult.Continue;
 
-            ClientLastShootHitBox.Add(@event.Userid, 0.0f);
-            ClientEntityHit.Add(@event.Userid, null);
-            ClientEntityNameHit.Add(@event.Userid, null);
-
+            ClientDisplayDatas.Add(@event.Userid, new());
             return HookResult.Continue;
         }
 
@@ -48,9 +44,8 @@ namespace EntBossHP
             if (client.IsBot || client.IsHLTV)
                 return;
 
-            ClientLastShootHitBox.Remove(client);
-            ClientEntityHit.Remove(client);
-            ClientEntityNameHit.Remove(client);
+            if(ClientDisplayDatas.ContainsKey(client))
+                ClientDisplayDatas.Remove(client);
         }
 
         private unsafe float GetMathCounterValue(nint handle)
@@ -61,6 +56,7 @@ namespace EntBossHP
 
         public HookResult CounterOut(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
+            /*
             if (!caller.IsValid)
                 return HookResult.Continue;
 
@@ -83,24 +79,59 @@ namespace EntBossHP
                     Print_BHUD(player(activator), caller, entityname, (int)Math.Round(hp));
                 }
             }
+            */
+            Server.PrintToChatAll($"activator = {activator.DesignerName} | caller = {caller.DesignerName}");
 
             return HookResult.Continue;
         }
 
         public HookResult BreakableOut(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
-
-            if (!activator.IsValid || !ClientLastShootHitBox.ContainsKey(player(activator)))
+            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(player(activator)))
                 return HookResult.Continue;
 
-            ClientLastShootHitBox[player(activator)] = Server.EngineTime;
+            if (!caller.IsValid)
+                return HookResult.Continue;
+
+            string entityname;
+            CBreakable prop = new CBreakable(caller.Handle);
+
+            if(caller.Entity.Name.Length <= 0)
+                entityname = "HP";
+
+            else
+                entityname = caller.Entity.Name;
+
+            if (!prop.IsValid || prop == null)
+                return HookResult.Continue;
+
+            var hp = prop!.Health;
+
+            Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
+
+            if (hp > 500000)
+                return HookResult.Continue;
+
+            if (player(activator) == null)
+                return HookResult.Continue;
+
+            if (ClientDisplayDatas[player(activator)].LastShootHitBox > Server.EngineTime - 2f)
+            {
+                ClientDisplayDatas[player(activator)].EntitiyHit = caller;
+                ClientDisplayDatas[player(activator)].BossName = caller.Entity.Name;
+                ClientDisplayDatas[player(activator)].BossHP = hp;
+            }
+
+            ClientDisplayDatas[player(activator)].LastShootHitBox = Server.EngineTime;
+
+            //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
 
             return HookResult.Continue;
         }
 
         public HookResult Hitbox_Hook(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
-            if (!activator.IsValid || !ClientLastShootHitBox.ContainsKey(player(activator)))
+            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(player(activator)))
                 return HookResult.Continue;
 
             if (!caller.IsValid)
@@ -109,10 +140,15 @@ namespace EntBossHP
             var entityname = caller.Entity.Name;
             CBreakable prop = new CBreakable(caller.Handle);
 
+            if (entityname.Length <= 0)
+                entityname = "HP";
+
             if (!prop.IsValid || prop == null)
                 return HookResult.Continue;
 
             var hp = prop!.Health;
+
+            Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
 
             if (hp > 500000)
                 return HookResult.Continue;
@@ -120,30 +156,44 @@ namespace EntBossHP
             if (player(activator) == null)
                 return HookResult.Continue;
 
-            if (ClientLastShootHitBox[player(activator)] > Server.EngineTime - 0.2f)
+            if (ClientDisplayDatas[player(activator)].LastShootHitBox > Server.EngineTime - 2f)
             {
-                if (string.IsNullOrEmpty(entityname))
-                    entityname = "HP";
-
-                ClientEntityHit[player(activator)] = caller;
-                ClientEntityNameHit[player(activator)] = caller.Entity.Name;
-
-                if (hp <= 0)
-                {
-                    Print_BHUD(player(activator), caller, entityname, 0);
-                }
-
-                else
-                {
-                    Print_BHUD(player(activator), caller, entityname, hp);
-                }
+                ClientDisplayDatas[player(activator)].EntitiyHit = caller;
+                ClientDisplayDatas[player(activator)].BossName = entityname;
+                ClientDisplayDatas[player(activator)].BossHP = hp;
             }
 
-            ClientLastShootHitBox[player(activator)] = Server.EngineTime;
+            ClientDisplayDatas[player(activator)].LastShootHitBox = Server.EngineTime;
+
+            //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
 
             return HookResult.Continue;
         }
 
+        public void OnGameFrame()
+        {
+            foreach(var client in Utilities.GetPlayers())
+            {
+                if(client == null)
+                    continue;
+
+                if (client.IsBot || client.IsHLTV)
+                    continue;
+
+                if (!ClientDisplayDatas.ContainsKey(client))
+                    continue;
+
+                if (ClientDisplayDatas[client].LastShootHitBox > Server.EngineTime - 2f)
+                    Print_BHud(client, ClientDisplayDatas[client]);
+            }
+        }
+
+        private void Print_BHud(CCSPlayerController client, ClientDisplayData data)
+        {
+            client.PrintToCenterHtml($"{data.BossName}: {data.BossHP}");
+        }
+
+        /*
         void Print_BHUD(CCSPlayerController client, CEntityInstance entity, string name, int hp)
         {
             CurrentTime = Server.EngineTime;
@@ -186,6 +236,7 @@ namespace EntBossHP
                 LastForceShowBossHP = CurrentTime;
             }
         }
+        */
 
         public static CCSPlayerController player(CEntityInstance instance)
         {
@@ -220,5 +271,45 @@ namespace EntBossHP
             // any further validity is up to the caller
             return player_pawn.OriginalController.Value;
         }
+    }
+}
+
+public class ClientDisplayData
+{
+    public ClientDisplayData()
+    {
+        _lastShootHitBox = 0.0f;
+        _entitiyHit = null;
+        _bossName = null;
+        _bossHP = 0;
+    }
+
+    private double _lastShootHitBox;
+    private CEntityInstance _entitiyHit;
+    private string _bossName;
+    private int _bossHP;
+
+    public double LastShootHitBox
+    {
+        get { return _lastShootHitBox; }
+        set {  _lastShootHitBox = value; }
+    }
+
+    public CEntityInstance EntitiyHit
+    {
+        get { return _entitiyHit; }
+        set { _entitiyHit = value; }
+    }
+
+    public string BossName
+    {
+        get { return _bossName; }
+        set { _bossName = value; }
+    }
+
+    public int BossHP
+    { 
+        get { return _bossHP; } 
+        set { _bossHP = value; } 
     }
 }
