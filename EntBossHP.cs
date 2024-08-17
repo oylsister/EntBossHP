@@ -12,6 +12,7 @@ namespace EntBossHP
         public override string ModuleAuthor => "Oylsister, Kxrnl";
 
         public Dictionary<CCSPlayerController, ClientDisplayData> ClientDisplayDatas { get; set; } = new Dictionary<CCSPlayerController, ClientDisplayData>();
+        public Dictionary<CEntityInstance, EntityData> EntityDatas { get; set; } = new Dictionary<CEntityInstance, EntityData>();
         public double CurrentTime;
         public double LastForceShowBossHP;
 
@@ -23,6 +24,7 @@ namespace EntBossHP
             HookEntityOutput("func_breakable", "OnHealthChanged", BreakableOut);
             HookEntityOutput("prop_dynamic", "OnHealthChanged", Hitbox_Hook);
 
+            RegisterEventHandler<EventRoundStart>(OnRoundStart);
             RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
             RegisterListener<Listeners.OnClientDisconnect>(OnClientDisconnect);
             RegisterListener<Listeners.OnTick>(OnGameFrame);
@@ -46,6 +48,12 @@ namespace EntBossHP
 
             if(ClientDisplayDatas.ContainsKey(client))
                 ClientDisplayDatas.Remove(client);
+        }
+
+        public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
+        {
+            EntityDatas.Clear();
+            return HookResult.Continue;
         }
 
         private unsafe float GetMathCounterValue(nint handle)
@@ -93,6 +101,12 @@ namespace EntBossHP
             if (!caller.IsValid)
                 return HookResult.Continue;
 
+            if(activator.DesignerName != "player")
+                return HookResult.Continue;
+
+            if(!EntityDatas.ContainsKey(caller))
+                EntityDatas.Add(caller, new());
+
             string entityname;
             CBreakable prop = new CBreakable(caller.Handle);
 
@@ -107,7 +121,16 @@ namespace EntBossHP
 
             var hp = prop!.Health;
 
-            Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
+            if (EntityDatas[caller].Playerhit.Contains(player(activator)))
+                EntityDatas[caller].Playerhit.Add(player(activator));
+
+            EntityDatas[caller].Name = entityname;
+            EntityDatas[caller].Health = hp;
+
+            if (EntityDatas[caller].MaxHealth <= EntityDatas[caller].Health)
+                EntityDatas[caller].MaxHealth = EntityDatas[caller].Health;
+
+            // Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
 
             if (hp > 500000)
                 return HookResult.Continue;
@@ -137,18 +160,36 @@ namespace EntBossHP
             if (!caller.IsValid)
                 return HookResult.Continue;
 
-            var entityname = caller.Entity.Name;
+            if (activator.DesignerName != "player")
+                return HookResult.Continue;
+
+            if (!EntityDatas.ContainsKey(caller))
+                EntityDatas.Add(caller, new());
+
+            string entityname;
             CBreakable prop = new CBreakable(caller.Handle);
 
-            if (entityname.Length <= 0)
+            if (caller.Entity.Name.Length <= 0)
                 entityname = "HP";
+
+            else
+                entityname = caller.Entity.Name;
 
             if (!prop.IsValid || prop == null)
                 return HookResult.Continue;
 
             var hp = prop!.Health;
 
-            Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
+            if (EntityDatas[caller].Playerhit.Contains(player(activator)))
+                EntityDatas[caller].Playerhit.Add(player(activator));
+
+            EntityDatas[caller].Name = entityname;
+            EntityDatas[caller].Health = hp;
+
+            if (EntityDatas[caller].MaxHealth <= EntityDatas[caller].Health)
+                EntityDatas[caller].MaxHealth = EntityDatas[caller].Health;
+
+            // Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
 
             if (hp > 500000)
                 return HookResult.Continue;
@@ -159,7 +200,7 @@ namespace EntBossHP
             if (ClientDisplayDatas[player(activator)].LastShootHitBox > Server.EngineTime - 2f)
             {
                 ClientDisplayDatas[player(activator)].EntitiyHit = caller;
-                ClientDisplayDatas[player(activator)].BossName = entityname;
+                ClientDisplayDatas[player(activator)].BossName = caller.Entity.Name;
                 ClientDisplayDatas[player(activator)].BossHP = hp;
             }
 
@@ -184,11 +225,22 @@ namespace EntBossHP
                     continue;
 
                 if (ClientDisplayDatas[client].LastShootHitBox > Server.EngineTime - 2f)
-                    Print_BHud(client, ClientDisplayDatas[client]);
+                {
+                    if (EntityDatas.ContainsKey(ClientDisplayDatas[client].EntitiyHit))
+                        Print_BHudGlobal(client, EntityDatas[ClientDisplayDatas[client].EntitiyHit]);
+
+                    else
+                        Print_BHudLocal(client, ClientDisplayDatas[client]);
+                }
             }
         }
 
-        private void Print_BHud(CCSPlayerController client, ClientDisplayData data)
+        private void Print_BHudGlobal(CCSPlayerController client, EntityData data)
+        {
+            client.PrintToCenterHtml($"{data.Name}: {data.Health}/{data.MaxHealth}");
+        }
+
+        private void Print_BHudLocal(CCSPlayerController client, ClientDisplayData data)
         {
             client.PrintToCenterHtml($"{data.BossName}: {data.BossHP}");
         }
@@ -272,6 +324,22 @@ namespace EntBossHP
             return player_pawn.OriginalController.Value;
         }
     }
+}
+
+public class EntityData
+{
+    public EntityData()
+    {
+        Playerhit = new List<CCSPlayerController>();
+        Health = 0;
+        MaxHealth = 0;
+        Name = "HP";
+    }
+
+    public List<CCSPlayerController> Playerhit;
+    public int Health;
+    public int MaxHealth;
+    public string Name;
 }
 
 public class ClientDisplayData
