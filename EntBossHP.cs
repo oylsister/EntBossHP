@@ -279,12 +279,14 @@ namespace EntBossHP
                     PlayerCount++;
             }
 
-            if(PlayerCount > EntityDatas[data.Entity].Playerhit.Count / 2)
+            // if there is alot of player hitting a same entity then print showing all player
+            if(EntityDatas[data.Entity].Playerhit.Count > PlayerCount / 2)
             {
                 PrintToCenterHtmlAll($"{data.Name}: {data.Health}");
                 return;
             }
 
+            // yeah just one
             else
                 client.PrintToCenterHtml($"{data.Name}: {data.Health}");
         }
