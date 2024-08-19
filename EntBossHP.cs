@@ -2,6 +2,8 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace EntBossHP
 {
@@ -13,6 +15,12 @@ namespace EntBossHP
 
         public Dictionary<CCSPlayerController, ClientDisplayData> ClientDisplayDatas { get; set; } = new Dictionary<CCSPlayerController, ClientDisplayData>();
         public Dictionary<CEntityInstance, EntityData> EntityDatas { get; set; } = new Dictionary<CEntityInstance, EntityData>();
+
+        public List<BreakableBoss> breakableBosses = new List<BreakableBoss>();
+        public List<MathCounterBoss> mathCounterBosses = new List<MathCounterBoss>();
+        public List<HPBarBoss> hpBarBosses = new List<HPBarBoss>();
+
+        public BossConfig BossConfigs;
         public double CurrentTime;
         public double LastForceShowBossHP;
 
@@ -28,11 +36,92 @@ namespace EntBossHP
             RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
             RegisterListener<Listeners.OnClientDisconnect>(OnClientDisconnect);
             RegisterListener<Listeners.OnTick>(OnGameFrame);
+            RegisterListener<Listeners.OnMapStart>(MapStart);
 
             if(hotReload)
             {
                 foreach(var player in Utilities.GetPlayers())
                     ClientDisplayDatas.Add(player, new());
+
+                MapStart(Server.MapName);
+            }
+        }
+
+        public void MapStart(string mapname)
+        {
+            var configPath = Path.Combine(ModuleDirectory, $"../../configs/bosshp/{mapname}.jsonc");
+
+            if(!File.Exists(configPath))
+            {
+                Logger.LogInformation($"Couldn't Find {configPath}");
+                return;
+            }
+            
+            BossConfigs = JsonConvert.DeserializeObject<BossConfig>(File.ReadAllText(configPath));
+            Logger.LogInformation($"Loaded Boss Config {configPath}");
+
+            BossDataLoading();
+        }
+
+        private void BossDataLoading()
+        {
+            foreach(var breakable in BossConfigs.BreakableList)
+            {
+                BreakableBoss boss = new BreakableBoss();
+
+                boss.BossName = breakable.Name;
+                boss.Health = 0;
+                boss.MaxHealth = 0;
+                boss.LastHit = 0.0f;
+                boss.Type = BossType.Breakable;
+
+                boss.BreakableEntity = null;
+                boss.BreakableEntityName = breakable.Breakable;
+
+                breakableBosses.Add(boss);
+            }
+
+            foreach (var mathcounter in BossConfigs.MathCounterList)
+            {
+                MathCounterBoss boss = new MathCounterBoss();
+
+                boss.BossName = mathcounter.Name;
+                boss.Health = 0;
+                boss.MaxHealth = 0;
+                boss.LastHit = 0.0f;
+                boss.Type = BossType.Breakable;
+
+                boss.MathCounterEntity = null;
+                boss.MathCounterHitMax = mathcounter.MathCounterMode == 2 ? true : false;
+                boss.MathCounterName = mathcounter.MathCounter;
+
+                mathCounterBosses.Add(boss);
+            }
+
+            foreach (var hpbar in BossConfigs.HPBarList)
+            {
+                HPBarBoss boss = new HPBarBoss();
+
+                boss.BossName = hpbar.Name;
+                boss.Health = 0;
+                boss.MaxHealth = 0;
+                boss.LastHit = 0.0f;
+                boss.Type = BossType.Breakable;
+
+                boss.MathCounterEntity = null;
+                boss.MathCounterHitMax = hpbar.MathCounterMode == 2 ? true : false;
+                boss.MathCounterName = hpbar.MathCounter;
+
+                boss.IteratorEntity = null;
+                boss.IteratorHitMax =  hpbar.IteratorMode == 2 ? true : false;
+                boss.IteratorName = hpbar.Iterator;
+                boss.IteratorValue = 0.0f;
+
+                boss.BackUpEntity = null;
+                boss.BackupName = hpbar.Backup;
+                boss.BackupValue = 0.0f;
+
+                mathCounterBosses.Add(boss);
             }
         }
 
@@ -102,10 +191,6 @@ namespace EntBossHP
 
             EntityDatas[caller].Name = entityname;
             EntityDatas[caller].Health = hp;
-
-            if (EntityDatas[caller].MaxHealth <= EntityDatas[caller].Health)
-                EntityDatas[caller].MaxHealth = EntityDatas[caller].Health;
-
             EntityDatas[caller].LastHit = Server.EngineTime;
 
             // Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
@@ -160,10 +245,6 @@ namespace EntBossHP
 
             EntityDatas[caller].Name = entityname;
             EntityDatas[caller].Health = hp;
-
-            if (EntityDatas[caller].MaxHealth <= EntityDatas[caller].Health)
-                EntityDatas[caller].MaxHealth = EntityDatas[caller].Health;
-
             EntityDatas[caller].LastHit = Server.EngineTime;
 
             // Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
@@ -219,10 +300,6 @@ namespace EntBossHP
 
             EntityDatas[caller].Name = entityname;
             EntityDatas[caller].Health = hp;
-
-            if (EntityDatas[caller].MaxHealth <= EntityDatas[caller].Health)
-                EntityDatas[caller].MaxHealth = EntityDatas[caller].Health;
-
             EntityDatas[caller].LastHit = Server.EngineTime;
 
             // Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
@@ -343,66 +420,5 @@ namespace EntBossHP
             var offset = Schema.GetSchemaOffset("CMathCounter", "m_OutValue");
             return *(float*)IntPtr.Add(handle, offset + 24);
         }
-    }
-}
-
-public class EntityData
-{
-    public EntityData(CEntityInstance entity)
-    {
-        Entity = entity;
-        Playerhit = new List<CCSPlayerController>();
-        Health = 0;
-        MaxHealth = 0;
-        Name = "HP";
-        LastHit = 0;
-        Entity = entity;
-    }
-
-    public CEntityInstance Entity;
-    public List<CCSPlayerController> Playerhit;
-    public int Health;
-    public int MaxHealth;
-    public string Name;
-    public double LastHit;
-}
-
-public class ClientDisplayData
-{
-    public ClientDisplayData()
-    {
-        _lastShootHitBox = 0.0f;
-        _entitiyHit = null;
-        _bossName = null;
-        _bossHP = 0;
-    }
-
-    private double _lastShootHitBox;
-    private CEntityInstance _entitiyHit;
-    private string _bossName;
-    private int _bossHP;
-
-    public double LastShootHitBox
-    {
-        get { return _lastShootHitBox; }
-        set {  _lastShootHitBox = value; }
-    }
-
-    public CEntityInstance EntitiyHit
-    {
-        get { return _entitiyHit; }
-        set { _entitiyHit = value; }
-    }
-
-    public string BossName
-    {
-        get { return _bossName; }
-        set { _bossName = value; }
-    }
-
-    public int BossHP
-    { 
-        get { return _bossHP; } 
-        set { _bossHP = value; } 
     }
 }
