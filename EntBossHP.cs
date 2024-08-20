@@ -1,11 +1,9 @@
-﻿using System.Collections;
-using CounterStrikeSharp.API;
+﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Bson;
 using static CounterStrikeSharp.API.Core.Listeners;
 
 namespace EntBossHP
@@ -24,6 +22,7 @@ namespace EntBossHP
         public List<HPBarBoss> hpBarBosses = new List<HPBarBoss>();
 
         public List<BossData> activeBosses;
+        bool configLoaded = false;
 
         public BossConfig BossConfigs;
         public double CurrentTime;
@@ -39,10 +38,10 @@ namespace EntBossHP
 
             RegisterEventHandler<EventRoundStart>(OnRoundStart);
             RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
-            RegisterListener<Listeners.OnClientDisconnect>(OnClientDisconnect);
-            RegisterListener<Listeners.OnTick>(OnGameFrame);
-            RegisterListener<Listeners.OnMapStart>(MapStart);
-            RegisterListener<Listeners.OnEntityCreated>(OnEntityCreated);
+            RegisterListener<OnClientDisconnect>(OnClientDisconnect);
+            RegisterListener<OnTick>(OnGameFrame);
+            RegisterListener<OnMapStart>(MapStart);
+            RegisterListener<OnEntityCreated>(OnEntityCreated);
 
             if (hotReload)
             {
@@ -60,11 +59,13 @@ namespace EntBossHP
             if(!File.Exists(configPath))
             {
                 Logger.LogInformation($"Couldn't Find {configPath}");
+                configLoaded = false;
                 return;
             }
             
             BossConfigs = JsonConvert.DeserializeObject<BossConfig>(File.ReadAllText(configPath));
             Logger.LogInformation($"Loaded Boss Config {configPath}");
+            configLoaded = true;
 
             BossDataLoading();
             activeBosses = new();
@@ -173,7 +174,31 @@ namespace EntBossHP
 
         public void OnEntityCreated(CEntityInstance entity)
         {
+            if (!configLoaded)
+                return;
 
+            if (entity.DesignerName == "math_counter")
+            {
+                AddTimer(0.1f, () =>
+                {
+                    Timer_MathCounterInitial(entity);
+                });
+            }
+        }
+
+        public void Timer_MathCounterInitial(CEntityInstance entity)
+        {
+            foreach (var boss in mathCounterBosses)
+            {
+                if (boss.MathCounterEntity == entity)
+                {
+                    if (boss.MathCounterHitMax)
+                    {
+                        var counter = new CMathCounter(boss.MathCounterEntity.Handle);
+                        boss.MaxHealth = (int)Math.Round(counter.Max);
+                    }
+                }
+            }
         }
 
         public HookResult CounterOut(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
@@ -197,7 +222,7 @@ namespace EntBossHP
 
             CMathCounter prop = new(caller.Handle);
 
-            var hp = (int)GetMathCounterValue(caller.Handle);
+            var hp = (int)Math.Round(GetMathCounterValue(caller.Handle));
 
             if (hp < 0)
                 Math.Abs(hp);
@@ -210,6 +235,42 @@ namespace EntBossHP
             EntityDatas[caller].LastHit = Server.EngineTime;
 
             // Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
+
+            // Boss Data section
+            if (configLoaded)
+            {
+                foreach (var boss in mathCounterBosses)
+                {
+                    if (caller.Entity.Name == boss.MathCounterName)
+                    {
+                        if (hp == 0)
+                        {
+                            if (activeBosses.Contains(boss))
+                                activeBosses.Remove(boss);
+
+                            continue;
+                        }
+
+                        boss.MathCounterEntity = caller;
+                        boss.LastHit = Server.EngineTime;
+
+                        if (!boss.MathCounterHitMax)
+                        {
+                            boss.Health = hp;
+                            if (boss.Health > boss.MaxHealth)
+                            {
+                                boss.MaxHealth = boss.Health;
+                            }
+                        }
+                        else
+                        {
+                            boss.Health = boss.MaxHealth - hp;
+                        }
+
+                        activeBosses.Add(boss);
+                    }
+                }
+            }
 
             if (hp > 500000)
                 return HookResult.Continue;
@@ -265,28 +326,31 @@ namespace EntBossHP
             EntityDatas[caller].LastHit = Server.EngineTime;
 
             // Boss Data section.
-            foreach(var boss in breakableBosses)
+            if (configLoaded)
             {
-                if(caller.Entity.Name == boss.BreakableEntityName)
+                foreach (var boss in breakableBosses)
                 {
-                    if (hp == 0)
+                    if (caller.Entity.Name == boss.BreakableEntityName)
                     {
-                        if (activeBosses.Contains(boss))
-                            activeBosses.Remove(boss);
+                        if (hp == 0)
+                        {
+                            if (activeBosses.Contains(boss))
+                                activeBosses.Remove(boss);
 
-                        continue;
+                            continue;
+                        }
+
+                        boss.BreakableEntity = caller;
+                        boss.LastHit = Server.EngineTime;
+                        boss.Health = hp;
+
+                        if (boss.Health > boss.MaxHealth)
+                        {
+                            boss.MaxHealth = boss.Health;
+                        }
+
+                        activeBosses.Add(boss);
                     }
-
-                    boss.BreakableEntity = caller;
-                    boss.LastHit = Server.EngineTime;
-                    boss.Health = hp;
-                    
-                    if(boss.Health > boss.MaxHealth)
-                    {
-                        boss.MaxHealth = boss.Health;
-                    }
-
-                    activeBosses.Add(boss);
                 }
             }
 
@@ -347,28 +411,31 @@ namespace EntBossHP
             EntityDatas[caller].LastHit = Server.EngineTime;
 
             // Boss Data section.
-            foreach (var boss in breakableBosses)
+            if (configLoaded)
             {
-                if (caller.Entity.Name == boss.BreakableEntityName)
+                foreach (var boss in breakableBosses)
                 {
-                    if (hp == 0)
+                    if (caller.Entity.Name == boss.BreakableEntityName)
                     {
-                        if (activeBosses.Contains(boss))
-                            activeBosses.Remove(boss);
+                        if (hp == 0)
+                        {
+                            if (activeBosses.Contains(boss))
+                                activeBosses.Remove(boss);
 
-                        continue;
+                            continue;
+                        }
+
+                        boss.BreakableEntity = caller;
+                        boss.LastHit = Server.EngineTime;
+                        boss.Health = hp;
+
+                        if (boss.Health > boss.MaxHealth)
+                        {
+                            boss.MaxHealth = boss.Health;
+                        }
+
+                        activeBosses.Add(boss);
                     }
-
-                    boss.BreakableEntity = caller;
-                    boss.LastHit = Server.EngineTime;
-                    boss.Health = hp;
-
-                    if (boss.Health > boss.MaxHealth)
-                    {
-                        boss.MaxHealth = boss.Health;
-                    }
-
-                    activeBosses.Add(boss);
                 }
             }
 
