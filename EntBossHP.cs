@@ -203,13 +203,18 @@ namespace EntBossHP
 
         public HookResult CounterOut(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
-            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(player(activator)))
+            if (activator == null)
+                return HookResult.Continue;
+
+            var client = player(activator);
+
+            if (client == null)
+                return HookResult.Continue;
+
+            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
                 return HookResult.Continue;
 
             if (!caller.IsValid)
-                return HookResult.Continue;
-
-            if (activator.DesignerName != "player")
                 return HookResult.Continue;
 
             if (!EntityDatas.ContainsKey(caller))
@@ -227,8 +232,8 @@ namespace EntBossHP
             if (hp < 0)
                 Math.Abs(hp);
 
-            if (EntityDatas[caller].Playerhit.Contains(player(activator)))
-                EntityDatas[caller].Playerhit.Add(player(activator));
+            if (EntityDatas[caller].Playerhit.Contains(client))
+                EntityDatas[caller].Playerhit.Add(client);
 
             EntityDatas[caller].Name = entityname;
             EntityDatas[caller].Health = hp;
@@ -275,13 +280,10 @@ namespace EntBossHP
             if (hp > 500000)
                 return HookResult.Continue;
 
-            if (player(activator) == null)
-                return HookResult.Continue;
-
-            ClientDisplayDatas[player(activator)].EntitiyHit = caller;
-            ClientDisplayDatas[player(activator)].BossName = caller.Entity.Name;
-            ClientDisplayDatas[player(activator)].BossHP = hp;
-            ClientDisplayDatas[player(activator)].LastShootHitBox = Server.EngineTime;
+            ClientDisplayDatas[client].EntitiyHit = caller;
+            ClientDisplayDatas[client].BossName = caller.Entity.Name;
+            ClientDisplayDatas[client].BossHP = hp;
+            ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
             // Server.PrintToChatAll($"activator = {activator.DesignerName} | caller = {caller.DesignerName}");
 
@@ -290,13 +292,18 @@ namespace EntBossHP
 
         public HookResult BreakableOut(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
-            if(!activator.IsValid || !ClientDisplayDatas.ContainsKey(player(activator)))
+            if (activator == null)
+                return HookResult.Continue;
+
+            var client = player(activator);
+
+            if (client == null)
+                return HookResult.Continue;
+
+            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
                 return HookResult.Continue;
 
             if (!caller.IsValid)
-                return HookResult.Continue;
-
-            if (activator.DesignerName != "player")
                 return HookResult.Continue;
 
             if (!EntityDatas.ContainsKey(caller))
@@ -317,8 +324,8 @@ namespace EntBossHP
             if (hp < 0)
                 hp = 0;
 
-            if (EntityDatas[caller].Playerhit.Contains(player(activator)))
-                EntityDatas[caller].Playerhit.Add(player(activator));
+            if (EntityDatas[caller].Playerhit.Contains(client))
+                EntityDatas[caller].Playerhit.Add(client);
 
             // entity section.
             EntityDatas[caller].Name = entityname;
@@ -359,14 +366,10 @@ namespace EntBossHP
             if (hp > 500000)
                 return HookResult.Continue;
 
-            if (player(activator) == null)
-                return HookResult.Continue;
-
-            ClientDisplayDatas[player(activator)].EntitiyHit = caller;
-            ClientDisplayDatas[player(activator)].BossName = caller.Entity.Name;
-            ClientDisplayDatas[player(activator)].BossHP = hp > 0 ? hp : 0;
-            ClientDisplayDatas[player(activator)].LastShootHitBox = Server.EngineTime;
-
+            ClientDisplayDatas[client].EntitiyHit = caller;
+            ClientDisplayDatas[client].BossName = caller.Entity.Name;
+            ClientDisplayDatas[client].BossHP = hp > 0 ? hp : 0;
+            ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
             //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
 
@@ -375,13 +378,18 @@ namespace EntBossHP
 
         public HookResult Hitbox_Hook(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
-            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(player(activator)))
+            if (activator == null)
+                return HookResult.Continue;
+
+            var client = player(activator);
+
+            if (client == null)
+                return HookResult.Continue;
+
+            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
                 return HookResult.Continue;
 
             if (!caller.IsValid)
-                return HookResult.Continue;
-
-            if (activator.DesignerName != "player")
                 return HookResult.Continue;
 
             if (!EntityDatas.ContainsKey(caller))
@@ -402,8 +410,8 @@ namespace EntBossHP
             if (hp < 0)
                 hp = 0;
 
-            if (EntityDatas[caller].Playerhit.Contains(player(activator)))
-                EntityDatas[caller].Playerhit.Add(player(activator));
+            if (EntityDatas[caller].Playerhit.Contains(client))
+                EntityDatas[caller].Playerhit.Add(client);
 
             // entity section
             EntityDatas[caller].Name = entityname;
@@ -444,13 +452,10 @@ namespace EntBossHP
             if (hp > 500000)
                 return HookResult.Continue;
 
-            if (player(activator) == null)
-                return HookResult.Continue;
-
-            ClientDisplayDatas[player(activator)].EntitiyHit = caller;
-            ClientDisplayDatas[player(activator)].BossName = caller.Entity.Name;
-            ClientDisplayDatas[player(activator)].BossHP = hp;
-            ClientDisplayDatas[player(activator)].LastShootHitBox = Server.EngineTime;
+            ClientDisplayDatas[client].EntitiyHit = caller;
+            ClientDisplayDatas[client].BossName = caller.Entity.Name;
+            ClientDisplayDatas[client].BossHP = hp;
+            ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
             //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
 
