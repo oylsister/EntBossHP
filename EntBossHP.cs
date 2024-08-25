@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Runtime.CompilerServices;
 using static CounterStrikeSharp.API.Core.Listeners;
 
 namespace EntBossHP
@@ -227,7 +228,9 @@ namespace EntBossHP
 
             CMathCounter prop = new(caller.Handle);
 
-            var hp = (int)Math.Round(GetMathCounterValue(caller.Handle));
+            //var hp = (int)Math.Round(GetMathCounterValue(caller.Handle));
+            var TheOutput = new CEntityOutputTemplate_float(caller.Handle);
+            var hp = (int)Math.Round(TheOutput.OutValue);
 
             if (hp < 0)
                 Math.Abs(hp);
@@ -588,4 +591,10 @@ namespace EntBossHP
             return *(float*)IntPtr.Add(handle, offset + 24);
         }
     }
+}
+
+public class CEntityOutputTemplate_float : NativeObject
+{
+    public CEntityOutputTemplate_float(IntPtr pointer) : base(pointer) { }
+    public unsafe float OutValue => Unsafe.Add(ref *(float*)Handle, 6);
 }
