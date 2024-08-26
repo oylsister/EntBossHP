@@ -28,15 +28,20 @@ namespace EntBossHP
     public class MathCounterBoss : BossData
     {
         public CEntityInstance MathCounterEntity { get; set; }
-        public bool MathCounterHitMax { get; set; }
+        public int MathCounterHitMode { get; set; } = -1;
         public string MathCounterName { get; set; }
+
+        // More data
+        public int MathCounterStartValue { get; set; }
+        public int MathCounterMaxValue { get; set; }
+        public int MathCounterMinValue { get; set; }
     }
 
     public class HPBarBoss : MathCounterBoss
     {
         public CEntityInstance IteratorEntity { get; set; }
         public string IteratorName { get; set; }
-        public bool IteratorHitMax { get; set; }
+        public int IteratorHitMode { get; set; } = -1;
         public float IteratorValue { get; set; }
         public CEntityInstance BackUpEntity { get; set; }
         public string BackupName { get; set; }
