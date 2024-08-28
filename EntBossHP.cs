@@ -170,7 +170,46 @@ namespace EntBossHP
             if (activeBosses != null)
                 activeBosses.Clear();
 
+            ResetBossHP();
+
             return HookResult.Continue;
+        }
+
+        private void ResetBossHP()
+        {
+            foreach(var boss in breakableBosses)
+            {
+                if(boss == null) continue;
+
+                boss.Health = 0;
+                boss.MaxHealth = 0;
+                boss.BreakableEntity = null;
+                boss.LastHit = 0f;
+            }
+
+            foreach(var boss in mathCounterBosses)
+            {
+                if(boss == null) continue ;
+
+                boss.Health = 0;
+                boss.MaxHealth = 0;
+                boss.MathCounterEntity = null;
+                boss.LastHit = 0f;
+            }
+
+            foreach (var boss in hpBarBosses)
+            {
+                if (boss == null) continue;
+
+                boss.Health = 0;
+                boss.MaxHealth = 0;
+                boss.MathCounterEntity = null;
+                boss.BackUpEntity = null;
+                boss.BackupValue = 0f;
+                boss.IteratorValue = 0f;
+                boss.IteratorEntity = null;
+                boss.LastHit = 0f;
+            }
         }
 
         public void OnEntityCreated(CEntityInstance entity)
@@ -374,8 +413,18 @@ namespace EntBossHP
 
                         if(boss.MathCounterHitMode == 1)
                         {
-
+                            boss.Health = (int)Math.Round((hp - prop.Min) + (boss.IteratorValue * boss.BackupValue));
                         }
+
+                        else
+                        {
+                            boss.Health = (int)Math.Round((prop.Max - hp) + (boss.IteratorValue * boss.BackupValue));
+                        }
+
+                        if(boss.MaxHealth < boss.Health)
+                            boss.MaxHealth = boss.Health;
+
+                        activeBosses.Add(boss);
                     }
                 }
             }
