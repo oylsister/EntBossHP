@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
@@ -12,8 +13,8 @@ namespace EntBossHP
     public class EntBossHP : BasePlugin
     {
         public override string ModuleName => "EntBossHP";
-        public override string ModuleVersion => "1.1";
-        public override string ModuleAuthor => "Oylsister, Kxrnl";
+        public override string ModuleVersion => "1.2";
+        public override string ModuleAuthor => "Oylsister, Credits to Kxrnl, DarkerZ [RUS]";
 
         public Dictionary<CCSPlayerController, ClientDisplayData> ClientDisplayDatas { get; set; } = new Dictionary<CCSPlayerController, ClientDisplayData>();
         public Dictionary<CEntityInstance, EntityData> EntityDatas { get; set; } = new Dictionary<CEntityInstance, EntityData>();
@@ -43,6 +44,8 @@ namespace EntBossHP
             RegisterListener<OnTick>(OnGameFrame);
             RegisterListener<OnMapStart>(MapStart);
             RegisterListener<OnEntityCreated>(OnEntityCreated);
+
+            AddCommand("boss_list", "", CommandBossList);
 
             if (hotReload)
             {
@@ -98,7 +101,7 @@ namespace EntBossHP
                 boss.Health = 0;
                 boss.MaxHealth = 0;
                 boss.LastHit = 0.0f;
-                boss.Type = BossType.Breakable;
+                boss.Type = BossType.MathCounter;
 
                 boss.MathCounterEntity = null;
                 boss.MathCounterHitMode = mathcounter.MathCounterMode;
@@ -115,7 +118,7 @@ namespace EntBossHP
                 boss.Health = 0;
                 boss.MaxHealth = 0;
                 boss.LastHit = 0.0f;
-                boss.Type = BossType.Breakable;
+                boss.Type = BossType.HPBar;
 
                 boss.MathCounterEntity = null;
                 boss.MathCounterHitMode = hpbar.MathCounterMode;
@@ -130,7 +133,7 @@ namespace EntBossHP
                 boss.BackupName = hpbar.Backup;
                 boss.BackupValue = 0.0f;
 
-                mathCounterBosses.Add(boss);
+                hpBarBosses.Add(boss);
             }
         }
 
@@ -167,10 +170,15 @@ namespace EntBossHP
         {
             EntityDatas.Clear();
 
-            if (activeBosses != null)
-                activeBosses.Clear();
+            if (configLoaded)
+            {
+                Server.PrintToChatAll($" {ChatColors.Olive}[{ChatColors.Lime}EntBossHP{ChatColors.Olive}] {ChatColors.White}The current map is supported by this plugin.");
 
-            ResetBossHP();
+                if (activeBosses != null)
+                    activeBosses.Clear();
+
+                ResetBossHP();
+            }
 
             return HookResult.Continue;
         }
@@ -226,6 +234,19 @@ namespace EntBossHP
             }
         }
 
+        private void CommandBossList(CCSPlayerController client, CommandInfo info)
+        {
+            foreach(var boss in BossConfigs.MathCounterList)
+            {
+                info.ReplyToCommand($"Name: {boss.Name} | Counter: {boss.MathCounter} | Mode: {boss.MathCounterMode}");
+            }
+
+            foreach(var boss in mathCounterBosses)
+            {
+                info.ReplyToCommand($"Name: {boss.BossName} | Counter: {boss.MathCounterName} | Mode: {boss.MathCounterHitMode}");
+            }
+        }
+
         public void Timer_MathCounterInitial(CEntityInstance entity)
         {
             if (entity == null)
@@ -239,32 +260,21 @@ namespace EntBossHP
                 if (boss.MathCounterName == entity.Entity.Name)
                 {
                     boss.MathCounterEntity = entity;
+                    var counter = new CMathCounter(entity.Handle);
+
+                    boss.MathCounterStartValue = (int)Math.Round(GetMathCounterValue(entity.Handle));
+                    boss.MathCounterMaxValue = (int)Math.Round(counter.Max);
+                    boss.MathCounterMinValue = (int)Math.Round(counter.Min);
 
                     // if math_counter increment when get hit.
-                    if (boss.MathCounterHitMode == 2)
+                    if (boss.MathCounterHitMode != 1 && boss.MathCounterHitMode != 2)
                     {
-                        var counter = new CMathCounter(entity.Handle);
-                        boss.MaxHealth = (int)Math.Round(counter.Max);
-                    }
-
-                    // normal mode
-                    else if (boss.MathCounterHitMode == 1)
-                    {
-                        var counter = GetMathCounterValue(entity.Handle);
-                        boss.MaxHealth = (int)Math.Round(counter);
-                    }
-
-                    // if other value is assign or is -1.
-                    else
-                    {
-                        var counter = new CMathCounter(entity.Handle);
-
                         // check if the outvalue is same as hitmin or not.
                         if (counter.HitMin)
-                            boss.MaxHealth = (int)Math.Round(GetMathCounterValue(entity.Handle));
+                            boss.MathCounterHitMode = 2;
 
                         else
-                            boss.MaxHealth = (int)Math.Round(counter.Max);
+                            boss.MathCounterHitMode = 1;
                     }
                 }
             }
@@ -274,11 +284,14 @@ namespace EntBossHP
                 if (entity.Entity.Name == boss.MathCounterName)
                 {
                     boss.MathCounterEntity = entity;
+                    var counter = new CMathCounter(entity.Handle);
 
-                    if(boss.MathCounterHitMode == -1)
+                    boss.MathCounterStartValue = (int)Math.Round(GetMathCounterValue(entity.Handle));
+                    boss.MathCounterMaxValue = (int)Math.Round(counter.Max);
+                    boss.MathCounterMinValue = (int)Math.Round(counter.Min);
+
+                    if (boss.MathCounterHitMode != 1 && boss.MathCounterHitMode != 2)
                     {
-                        var counter = new CMathCounter(entity.Handle);
-
                         if (counter.HitMin)
                             boss.MathCounterHitMode = 2;
 
@@ -300,11 +313,17 @@ namespace EntBossHP
 
                     else
                     {
-                        if(iteratorMath.HitMin)
+                        if (iteratorMath.HitMin)
+                        {
+                            boss.IteratorHitMode = 2;
                             boss.IteratorValue = iteratorMath.Max;
+                        }
 
                         else
+                        {
+                            boss.IteratorHitMode = 1;
                             boss.IteratorValue = GetMathCounterValue(entity.Handle);
+                        }
                     }
                 }
 
@@ -321,23 +340,6 @@ namespace EntBossHP
 
         public HookResult CounterOut(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
-            if (activator == null)
-                return HookResult.Continue;
-
-            var client = player(activator);
-
-            if (client == null)
-                return HookResult.Continue;
-
-            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
-                return HookResult.Continue;
-
-            if (!caller.IsValid)
-                return HookResult.Continue;
-
-            if (!EntityDatas.ContainsKey(caller))
-                EntityDatas.Add(caller, new(caller));
-
             var entityname = caller.Entity.Name;
 
             if (string.IsNullOrEmpty(entityname) || string.IsNullOrWhiteSpace(entityname))
@@ -347,16 +349,9 @@ namespace EntBossHP
 
             //var hp = (int)Math.Round(GetMathCounterValue(caller.Handle));
             var TheOutput = new CEntityOutputTemplate_float(output.Handle);
-            var hp = (int)Math.Round(TheOutput.OutValue);
+            var values = (int)Math.Round(TheOutput.OutValue);
 
-            if (!EntityDatas[caller].Playerhit.Contains(client))
-                EntityDatas[caller].Playerhit.Add(client);
-
-            EntityDatas[caller].Name = entityname;
-            EntityDatas[caller].Health = hp;
-            EntityDatas[caller].LastHit = Server.EngineTime;
-
-            // Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
+            //Server.PrintToChatAll($"{caller.Entity.Name}: {values}");
 
             // Boss Data section
             if (configLoaded)
@@ -365,10 +360,15 @@ namespace EntBossHP
                 {
                     if (caller.Entity.Name == boss.MathCounterName)
                     {
-                        if (hp == 0)
+                        if (values == 0)
                         {
+                            //Server.PrintToChatAll($"{caller.Entity.Name} is 0");
+
                             if (activeBosses.Contains(boss))
+                            {
+                                //Server.PrintToChatAll($"{caller.Entity.Name} get removed!");
                                 activeBosses.Remove(boss);
+                            }
 
                             continue;
                         }
@@ -378,7 +378,8 @@ namespace EntBossHP
 
                         if (boss.MathCounterHitMode == 1)
                         {
-                            boss.Health = hp;
+                            boss.Health = values;
+
                             if (boss.Health > boss.MaxHealth)
                             {
                                 boss.MaxHealth = boss.Health;
@@ -386,10 +387,23 @@ namespace EntBossHP
                         }
                         else
                         {
-                            boss.Health = boss.MaxHealth - hp;
+                            boss.Health = boss.MaxHealth - values;
                         }
 
-                        activeBosses.Add(boss);
+                        if (!activeBosses.Contains(boss))
+                        {
+                            //Server.PrintToChatAll($"{caller.Entity.Name} get added to list!");
+                            activeBosses.Add(boss);
+                        }
+
+                        else
+                        {
+                            //Server.PrintToChatAll($"{caller.Entity.Name} get updated");
+                            var index = activeBosses.IndexOf(boss);
+                            activeBosses[index].Health = boss.Health;
+                            activeBosses[index].MaxHealth = boss.MaxHealth;
+                            activeBosses[index].LastHit = boss.LastHit;
+                        }
                     }
                 }
 
@@ -397,7 +411,7 @@ namespace EntBossHP
                 {
                     if (caller.Entity.Name == boss.MathCounterName)
                     {
-                        if (hp == 0)
+                        if (values == 0)
                         {
                             if (activeBosses.Contains(boss))
                                 activeBosses.Remove(boss);
@@ -410,28 +424,72 @@ namespace EntBossHP
 
                         if(boss.MathCounterHitMode == 1)
                         {
-                            boss.Health = (int)Math.Round((hp - prop.Min) + (boss.IteratorValue * boss.BackupValue));
+                            boss.Health = (int)Math.Round((values - prop.Min) + (boss.IteratorValue * boss.BackupValue));
                         }
 
                         else
                         {
-                            boss.Health = (int)Math.Round((prop.Max - hp) + (boss.IteratorValue * boss.BackupValue));
+                            boss.Health = (int)Math.Round((prop.Max - values) + (boss.IteratorValue * boss.BackupValue));
                         }
 
                         if(boss.MaxHealth < boss.Health)
                             boss.MaxHealth = boss.Health;
 
-                        activeBosses.Add(boss);
+                        if (!activeBosses.Contains(boss))
+                            activeBosses.Add(boss);
+
+                        else
+                        {
+                            var index = activeBosses.IndexOf(boss);
+                            activeBosses[index].Health = boss.Health;
+                            activeBosses[index].MaxHealth = boss.MaxHealth;
+                            activeBosses[index].LastHit = boss.LastHit;
+                        }
+                    }
+
+                    if (caller.Entity.Name == boss.IteratorName)
+                    {
+                        if(boss.IteratorHitMode == 1)
+                            boss.IteratorValue = values - prop.Min;
+
+                        else
+                            boss.IteratorValue = prop.Max - values;
+                    }
+
+                    if (caller.Entity.Name == boss.BackupName)
+                    {
+                        boss.BackupValue = values;
                     }
                 }
             }
 
-            if (hp > 500000)
+            if (!EntityDatas.ContainsKey(caller))
+                EntityDatas.Add(caller, new(caller));
+
+            if (activator == null)
                 return HookResult.Continue;
+
+            var client = player(activator);
+
+            if (client == null)
+                return HookResult.Continue;
+
+            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
+                return HookResult.Continue;
+
+            if (values > 500000)
+                return HookResult.Continue;
+
+            if (!EntityDatas[caller].Playerhit.Contains(client))
+                EntityDatas[caller].Playerhit.Add(client);
+
+            EntityDatas[caller].Name = entityname;
+            EntityDatas[caller].Health = values;
+            EntityDatas[caller].LastHit = Server.EngineTime;
 
             ClientDisplayDatas[client].EntitiyHit = caller;
             ClientDisplayDatas[client].BossName = caller.Entity.Name;
-            ClientDisplayDatas[client].BossHP = hp;
+            ClientDisplayDatas[client].BossHP = values;
             ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
             // Server.PrintToChatAll($"activator = {activator.DesignerName} | caller = {caller.DesignerName}");
@@ -491,7 +549,7 @@ namespace EntBossHP
                     {
                         if (caller.Entity.Name == boss.BreakableEntityName)
                         {
-                            if (hp == 0)
+                            if (hp <= 0)
                             {
                                 if (activeBosses.Contains(boss))
                                     activeBosses.Remove(boss);
@@ -508,7 +566,16 @@ namespace EntBossHP
                                 boss.MaxHealth = boss.Health;
                             }
 
-                            activeBosses.Add(boss);
+                            if (!activeBosses.Contains(boss))
+                                activeBosses.Add(boss);
+
+                            else
+                            {
+                                var index = activeBosses.IndexOf(boss);
+                                activeBosses[index].Health = boss.Health;
+                                activeBosses[index].MaxHealth = boss.MaxHealth;
+                                activeBosses[index].LastHit = boss.LastHit;
+                            }
                         }
                     }
                 }
@@ -617,7 +684,7 @@ namespace EntBossHP
             // proceed check for entity hit.
             EntityOnFrame();
 
-            if (activeBosses != null && activeBosses.Count <= 0)
+            if (activeBosses != null && activeBosses.Count > 0)
                 BossHPOnFrame();
         }
 
@@ -635,10 +702,6 @@ namespace EntBossHP
             {
                 // better check than let it pass through
                 if (entity == null)
-                    continue;
-
-                // is entity name on config file?
-                if(IsEntityInBossHP(entity.Entity))
                     continue;
 
                 // get player count that hit this entity.
@@ -689,8 +752,6 @@ namespace EntBossHP
             Print_BossHP();
         }
 
-        int PlayerCount;
-
         private void Print_BHudGlobal(CCSPlayerController client, EntityData data)
         { 
             if (client == null) return;
@@ -714,20 +775,56 @@ namespace EntBossHP
         {
             string message = "";
 
-            if(activeBosses.Count < 2)
+            foreach (var boss in activeBosses)
             {
-                message += $"{activeBosses[0].BossName} : {activeBosses[0].Health} | {activeBosses[0].MaxHealth}";
-            }
-
-            else if(activeBosses.Count > 2)
-            {
-                foreach (var boss in activeBosses)
-                {
-                    message += $"{boss.BossName} : {boss.Health} | {boss.MaxHealth}";
-                }
+                message += $"{boss.BossName} : {boss.Health} <br>{CalculateHPBar(boss.Health, boss.MaxHealth)}";
             }
 
             PrintToCenterHtmlAll(message);
+        }
+
+        private string CalculateHPBar(int hp, int maxhp)
+        {
+            // 800 / 10 = 80
+            var ratio = (float)maxhp / 10;
+
+            // 720 / 80 = 9
+            var hpbar = hp / ratio;
+
+            if (hpbar >= 10f)
+                return "■■■■■■■■■■";
+
+            else if (hpbar < 10f && hpbar >= 9f)
+                return "■■■■■■■■■□";
+
+            else if (hpbar < 9f && hpbar >= 8f)
+                return "■■■■■■■■□□";
+
+            else if (hpbar < 8f && hpbar >= 7f)
+                return "■■■■■■■□□□";
+
+            else if (hpbar < 7f && hpbar >= 6f)
+                return "■■■■■■□□□□";
+
+            else if (hpbar < 6f && hpbar >= 5f)
+                return "■■■■■□□□□□";
+
+            else if (hpbar < 5f && hpbar >= 4f)
+                return "■■■■□□□□□□";
+
+            else if (hpbar < 4f && hpbar >= 3f)
+                return "■■■□□□□□□□";
+
+            else if (hpbar < 3f && hpbar >= 2f)
+                return "■■□□□□□□□□";
+
+            else if (hpbar < 2f && hpbar > 0f)
+                return "■□□□□□□□□□";
+
+            else if (hpbar <= 0f)
+                return "□□□□□□□□□□";
+
+            return "□□□□□□□□□□";
         }
 
         public bool IsEntityInBossHP(CEntityInstance entity)
