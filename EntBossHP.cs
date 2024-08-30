@@ -250,8 +250,8 @@ namespace EntBossHP
                     // normal mode
                     else if (boss.MathCounterHitMode == 1)
                     {
-                        var counter = new CEntityOutputTemplate_float(entity.Handle);
-                        boss.MaxHealth = (int)Math.Round(counter.OutValue);
+                        var counter = GetMathCounterValue(entity.Handle);
+                        boss.MaxHealth = (int)Math.Round(counter);
                     }
 
                     // if other value is assign or is -1.
@@ -261,7 +261,7 @@ namespace EntBossHP
 
                         // check if the outvalue is same as hitmin or not.
                         if (counter.HitMin)
-                            boss.MaxHealth = (int)Math.Round(new CEntityOutputTemplate_float(entity.Handle).OutValue);
+                            boss.MaxHealth = (int)Math.Round(GetMathCounterValue(entity.Handle));
 
                         else
                             boss.MaxHealth = (int)Math.Round(counter.Max);
@@ -296,7 +296,7 @@ namespace EntBossHP
                         boss.IteratorValue = iteratorMath.Max;
 
                     else if (boss.IteratorHitMode == 1)
-                        boss.IteratorValue = new CEntityOutputTemplate_float(entity.Handle).OutValue;
+                        boss.IteratorValue = GetMathCounterValue(entity.Handle);
 
                     else
                     {
@@ -304,7 +304,7 @@ namespace EntBossHP
                             boss.IteratorValue = iteratorMath.Max;
 
                         else
-                            boss.IteratorValue = new CEntityOutputTemplate_float(entity.Handle).OutValue;
+                            boss.IteratorValue = GetMathCounterValue(entity.Handle);
                     }
                 }
 
@@ -313,7 +313,7 @@ namespace EntBossHP
                     if (entity.Entity.Name == boss.BackupName)
                     {
                         boss.BackUpEntity = entity;
-                        boss.BackupValue = new CEntityOutputTemplate_float(entity.Handle).OutValue;
+                        boss.BackupValue = GetMathCounterValue(entity.Handle);
                     }
                 }
             }
