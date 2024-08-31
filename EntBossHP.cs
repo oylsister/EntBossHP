@@ -46,6 +46,7 @@ namespace EntBossHP
             RegisterListener<OnEntityCreated>(OnEntityCreated);
 
             AddCommand("boss_list", "", CommandBossList);
+            //AddCommand("boss_text", "", CommandBossText);
 
             if (hotReload)
             {
@@ -246,6 +247,18 @@ namespace EntBossHP
                 info.ReplyToCommand($"Name: {boss.BossName} | Counter: {boss.MathCounterName} | Mode: {boss.MathCounterHitMode}");
             }
         }
+
+        /*
+        private void CommandBossText(CCSPlayerController client, CommandInfo info)
+        {
+            int size = int.Parse(info.GetArg(1));
+
+            var hp = "BossName: 5000";
+            var bar = "■■■■■■■■□□";
+
+            client.PrintToCenterHtml($"<span class=\"fontSize-m\">{hp}</span><br><span class=\"fontSize-l\">{bar}</span>");
+            info.ReplyToCommand($"<span class=\"fontSize-m\">{hp}</span><br><span class=\"fontSize-l\">{bar}</span>");
+        }*/
 
         public void Timer_MathCounterInitial(CEntityInstance entity)
         {
@@ -777,7 +790,23 @@ namespace EntBossHP
 
             foreach (var boss in activeBosses)
             {
-                message += $"{boss.BossName} : {boss.Health} <br>{CalculateHPBar(boss.Health, boss.MaxHealth)}";
+                var count = 0;
+                if (activeBosses.Count > 1)
+                {
+                    var percent = boss.Health / (boss.MaxHealth / 100);
+                    message += $"{boss.BossName} : {boss.Health} ({percent}%)";
+
+                    if(count < activeBosses.Count - 1)
+                    {
+                        message += "<br>";
+                    }
+
+                    count++;
+                }
+                else
+                {
+                    message += $"{boss.BossName} : {boss.Health} <br><span class=\"fontSize-l\">{CalculateHPBar(boss.Health, boss.MaxHealth)}</span>";
+                }
             }
 
             PrintToCenterHtmlAll(message);
