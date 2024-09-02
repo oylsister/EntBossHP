@@ -483,9 +483,8 @@ namespace EntBossHP
                     {
                         boss.BackupValue = values;
                     }
-
-                    Print_BossHP();
                 }
+                Print_BossHP();
             }
 
             if (!EntityDatas.ContainsKey(caller))
@@ -583,6 +582,7 @@ namespace EntBossHP
                             }
                         }
                     }
+                    Print_BossHP();
                 }
 
                 if (!EntityDatas.ContainsKey(caller))
@@ -681,6 +681,8 @@ namespace EntBossHP
                             }
                         }
                     }
+
+                    Print_BossHP();
                 }
 
                 if (!EntityDatas.ContainsKey(caller))
