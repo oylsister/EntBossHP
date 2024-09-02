@@ -41,12 +41,11 @@ namespace EntBossHP
             RegisterEventHandler<EventRoundStart>(OnRoundStart);
             RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
             RegisterListener<OnClientDisconnect>(OnClientDisconnect);
-            RegisterListener<OnTick>(OnGameFrame);
             RegisterListener<OnMapStart>(MapStart);
             RegisterListener<OnEntityCreated>(OnEntityCreated);
 
             AddCommand("boss_list", "", CommandBossList);
-            //AddCommand("boss_text", "", CommandBossText);
+            // AddCommand("boss_text", "", CommandBossText);
 
             if (hotReload)
             {
@@ -256,9 +255,17 @@ namespace EntBossHP
             var hp = "BossName: 5000";
             var bar = "■■■■■■■■□□";
 
-            client.PrintToCenterHtml($"<span class=\"fontSize-m\">{hp}</span><br><span class=\"fontSize-l\">{bar}</span>");
+            //client.PrintToCenterHtml($"<span class=\"fontSize-m\">{hp}</span><br><span class=\"fontSize-l\">{bar}</span>", 5);
+
+            EventShowSurvivalRespawnStatus eventShowSurvivalRespawnStatus = new EventShowSurvivalRespawnStatus(force: true);
+            eventShowSurvivalRespawnStatus.LocToken = $"<span class=\"fontSize-m\">{hp}</span><br><span class=\"fontSize-l\">{bar}</span>";
+            eventShowSurvivalRespawnStatus.Duration = 5;
+            eventShowSurvivalRespawnStatus.Userid = client;
+            eventShowSurvivalRespawnStatus.FireEventToClient(client);
+
             info.ReplyToCommand($"<span class=\"fontSize-m\">{hp}</span><br><span class=\"fontSize-l\">{bar}</span>");
-        }*/
+        }
+        */
 
         public void Timer_MathCounterInitial(CEntityInstance entity)
         {
@@ -353,6 +360,9 @@ namespace EntBossHP
 
         public HookResult CounterOut(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
+            if (caller == null)
+                return HookResult.Continue;
+
             var entityname = caller.Entity.Name;
 
             if (string.IsNullOrEmpty(entityname) || string.IsNullOrWhiteSpace(entityname))
@@ -473,11 +483,17 @@ namespace EntBossHP
                     {
                         boss.BackupValue = values;
                     }
+
+                    Print_BossHP();
                 }
             }
 
             if (!EntityDatas.ContainsKey(caller))
                 EntityDatas.Add(caller, new(caller));
+
+            EntityDatas[caller].Name = entityname;
+            EntityDatas[caller].Health = values;
+            EntityDatas[caller].LastHit = Server.EngineTime;
 
             if (activator == null)
                 return HookResult.Continue;
@@ -496,14 +512,13 @@ namespace EntBossHP
             if (!EntityDatas[caller].Playerhit.Contains(client))
                 EntityDatas[caller].Playerhit.Add(client);
 
-            EntityDatas[caller].Name = entityname;
-            EntityDatas[caller].Health = values;
-            EntityDatas[caller].LastHit = Server.EngineTime;
-
             ClientDisplayDatas[client].EntitiyHit = caller;
             ClientDisplayDatas[client].BossName = caller.Entity.Name;
             ClientDisplayDatas[client].BossHP = values;
             ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
+
+            if (activeBosses.Count < 1)
+                Print_BHud(EntityDatas[caller]);
 
             // Server.PrintToChatAll($"activator = {activator.DesignerName} | caller = {caller.DesignerName}");
 
@@ -512,22 +527,8 @@ namespace EntBossHP
 
         public HookResult BreakableOut(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
-            if (activator == null)
+            if (caller == null)
                 return HookResult.Continue;
-
-            var client = player(activator);
-
-            if (client == null)
-                return HookResult.Continue;
-
-            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
-                return HookResult.Continue;
-
-            if (!caller.IsValid)
-                return HookResult.Continue;
-
-            if (!EntityDatas.ContainsKey(caller))
-                EntityDatas.Add(caller, new(caller));
 
             CBreakable prop = new CBreakable(caller.Handle);
 
@@ -546,15 +547,6 @@ namespace EntBossHP
 
             if (hp < 99999)
             {
-
-                if (!EntityDatas[caller].Playerhit.Contains(client))
-                    EntityDatas[caller].Playerhit.Add(client);
-
-                // entity section
-                EntityDatas[caller].Name = entityname;
-                EntityDatas[caller].Health = hp;
-                EntityDatas[caller].LastHit = Server.EngineTime;
-
                 // Boss Data section.
                 if (configLoaded)
                 {
@@ -593,12 +585,37 @@ namespace EntBossHP
                     }
                 }
 
+                if (!EntityDatas.ContainsKey(caller))
+                    EntityDatas.Add(caller, new(caller));
+
+                // entity section
+                EntityDatas[caller].Name = entityname;
+                EntityDatas[caller].Health = hp;
+                EntityDatas[caller].LastHit = Server.EngineTime;
+
+                if (activator == null)
+                    return HookResult.Continue;
+
+                var client = player(activator);
+
+                if (client == null)
+                    return HookResult.Continue;
+
+                if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
+                    return HookResult.Continue;
+
+                if (!EntityDatas[caller].Playerhit.Contains(client))
+                    EntityDatas[caller].Playerhit.Add(client);
+
                 // Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
 
                 ClientDisplayDatas[client].EntitiyHit = caller;
                 ClientDisplayDatas[client].BossName = caller.Entity.Name;
                 ClientDisplayDatas[client].BossHP = hp;
                 ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
+
+                if (activeBosses.Count < 1)
+                    Print_BHud(EntityDatas[caller]);
 
                 //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
             }
@@ -608,22 +625,8 @@ namespace EntBossHP
 
         public HookResult Hitbox_Hook(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
-            if (activator == null)
+            if (caller == null)
                 return HookResult.Continue;
-
-            var client = player(activator);
-
-            if (client == null)
-                return HookResult.Continue;
-
-            if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
-                return HookResult.Continue;
-
-            if (!caller.IsValid)
-                return HookResult.Continue;
-
-            if (!EntityDatas.ContainsKey(caller))
-                EntityDatas.Add(caller, new(caller));
 
             CBreakable prop = new CBreakable(caller.Handle);
 
@@ -642,14 +645,6 @@ namespace EntBossHP
 
             if (hp < 99999)
             {
-                if (!EntityDatas[caller].Playerhit.Contains(client))
-                    EntityDatas[caller].Playerhit.Add(client);
-
-                // entity section
-                EntityDatas[caller].Name = entityname;
-                EntityDatas[caller].Health = hp;
-                EntityDatas[caller].LastHit = Server.EngineTime;
-
                 // Boss Data section.
                 if (configLoaded)
                 {
@@ -657,7 +652,7 @@ namespace EntBossHP
                     {
                         if (caller.Entity.Name == boss.BreakableEntityName)
                         {
-                            if (hp == 0)
+                            if (hp <= 0)
                             {
                                 if (activeBosses.Contains(boss))
                                     activeBosses.Remove(boss);
@@ -674,10 +669,41 @@ namespace EntBossHP
                                 boss.MaxHealth = boss.Health;
                             }
 
-                            activeBosses.Add(boss);
+                            if (!activeBosses.Contains(boss))
+                                activeBosses.Add(boss);
+
+                            else
+                            {
+                                var index = activeBosses.IndexOf(boss);
+                                activeBosses[index].Health = boss.Health;
+                                activeBosses[index].MaxHealth = boss.MaxHealth;
+                                activeBosses[index].LastHit = boss.LastHit;
+                            }
                         }
                     }
                 }
+
+                if (!EntityDatas.ContainsKey(caller))
+                    EntityDatas.Add(caller, new(caller));
+
+                // entity section
+                EntityDatas[caller].Name = entityname;
+                EntityDatas[caller].Health = hp;
+                EntityDatas[caller].LastHit = Server.EngineTime;
+
+                if (activator == null)
+                    return HookResult.Continue;
+
+                var client = player(activator);
+
+                if (client == null)
+                    return HookResult.Continue;
+
+                if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
+                    return HookResult.Continue;
+
+                if (!EntityDatas[caller].Playerhit.Contains(client))
+                    EntityDatas[caller].Playerhit.Add(client);
 
                 // Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
 
@@ -686,22 +712,16 @@ namespace EntBossHP
                 ClientDisplayDatas[client].BossHP = hp;
                 ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
+                if (activeBosses.Count < 1)
+                    Print_BHud(EntityDatas[caller]);
+
                 //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
             }
 
             return HookResult.Continue;
         }
 
-        public void OnGameFrame()
-        {
-            // proceed check for entity hit.
-            EntityOnFrame();
-
-            if (activeBosses != null && activeBosses.Count > 0)
-                BossHPOnFrame();
-        }
-
-        private void EntityOnFrame()
+        private void Print_BHud(EntityData entity)
         {
             // if there is bossHP active now, don't show until it's clear;
             if (activeBosses != null && activeBosses.Count > 0)
@@ -711,81 +731,72 @@ namespace EntBossHP
             if (EntityDatas != null && EntityDatas.Count < 0)
                 return;
 
-            foreach(var entity in EntityDatas.Values)
+            // better check than let it pass through
+            if (entity == null)
+                return;
+
+            // get player count that hit this entity.
+            var playerCount = entity.Playerhit.Count;
+
+            // compare player actual hit number with all ct player dived by 2.
+            bool overCount = playerCount > Utilities.GetPlayers().Where(player => player.Team == CsTeam.CounterTerrorist).Count() / 2;
+
+            // if there is a lot player hitting boss, then show them all!
+            if (overCount && entity.LastHit > Server.EngineTime - 5.0f)
+                Print_BHudAll(entity);
+
+            if (entity.Playerhit.Count < 0)
+                return;
+
+            // Remove Player from list of Entity hit so they can count.
+            foreach(var player in entity.Playerhit)
             {
-                // better check than let it pass through
-                if (entity == null)
-                    continue;
-
-                // get player count that hit this entity.
-                var playerCount = entity.Playerhit.Count;
-
-                // compare player actual hit number with all ct player dived by 2.
-                bool overCount = playerCount > Utilities.GetPlayers().Where(player => player.Team == CsTeam.CounterTerrorist).Count() / 2;
-
-                // if there is a lot player hitting boss, then show them all!
-                if (overCount && entity.LastHit > Server.EngineTime - 5.0f)
-                    Print_BHudAll(entity);
-
-                if (entity.Playerhit.Count < 0)
-                    continue;
-
-                // Remove Player from list of Entity hit so they can count.
-                foreach(var player in entity.Playerhit)
+                if(ClientDisplayDatas.ContainsKey(player))
                 {
-                    if(ClientDisplayDatas.ContainsKey(player))
+                    var clientData = ClientDisplayDatas[player];
+
+                    if(clientData.EntitiyHit == entity.Entity)
                     {
-                        var clientData = ClientDisplayDatas[player];
+                        // player doesn't hit entity more than 2 seconds then remove it.
+                        if (clientData.LastShootHitBox < Server.EngineTime - 5.0f)
+                            entity.Playerhit.Remove(player);
 
-                        if(clientData.EntitiyHit == entity.Entity)
+                        // if not then
+                        else
                         {
-                            // player doesn't hit entity more than 2 seconds then remove it.
-                            if (clientData.LastShootHitBox < Server.EngineTime - 5.0f)
-                                entity.Playerhit.Remove(player);
-
-                            // if not then
-                            else
-                            {
-                                // if no player hit it enough then let's just print hp to specific player that hit it.
-                                if(!overCount && clientData.LastShootHitBox > Server.EngineTime - 5.0f)
-                                    Print_BHudGlobal(player, entity);
-                            }
+                            // if no player hit it enough then let's just print hp to specific player that hit it.
+                            if(!overCount && clientData.LastShootHitBox > Server.EngineTime - 5.0f)
+                                Print_BHudClient(player, entity);
                         }
                     }
                 }
             }
         }
 
-        private void BossHPOnFrame()
-        {
-            // There is no active bosses then why show lol. 
-            if (activeBosses.Count <= 0)
-                return;
-
-            Print_BossHP();
-        }
-
-        private void Print_BHudGlobal(CCSPlayerController client, EntityData data)
+        private void Print_BHudClient(CCSPlayerController client, EntityData data)
         { 
             if (client == null) return;
 
-            client.PrintToCenterHtml($"{data.Name}: {data.Health}");
+            client.PrintToCenter($"{data.Name}: {data.Health}");
         }
 
         private void Print_BHudAll(EntityData data)
         {
-            PrintToCenterHtmlAll($"{data.Name}: {data.Health}");
+            PrintToCenterAll($"{data.Name}: {data.Health}");
         }
 
         private void Print_BHudLocal(CCSPlayerController client, ClientDisplayData data)
         {
             if (client == null) return;
 
-            client.PrintToCenterHtml($"{data.BossName}: {data.BossHP}");
+            client.PrintToCenter($"{data.BossName}: {data.BossHP}");
         }
 
         private void Print_BossHP()
         {
+            if (activeBosses.Count < 1)
+                return;
+
             string message = "";
 
             foreach (var boss in activeBosses)
@@ -798,18 +809,18 @@ namespace EntBossHP
 
                     if(count < activeBosses.Count - 1)
                     {
-                        message += "<br>";
+                        message += "\n";
                     }
 
                     count++;
                 }
                 else
                 {
-                    message += $"{boss.BossName} : {boss.Health} <br><span class=\"fontSize-l\">{CalculateHPBar(boss.Health, boss.MaxHealth)}</span>";
+                    message += $"{boss.BossName} : {boss.Health}\n{CalculateHPBar(boss.Health, boss.MaxHealth)}";
                 }
             }
 
-            PrintToCenterHtmlAll(message);
+            PrintToCenterAll(message);
         }
 
         private string CalculateHPBar(int hp, int maxhp)
@@ -915,14 +926,14 @@ namespace EntBossHP
             return player_pawn.OriginalController.Value;
         }
 
-        void PrintToCenterHtmlAll(string text)
+        void PrintToCenterAll(string text)
         {
             foreach(var player in Utilities.GetPlayers())
             {
                 // player null lol
                 if (player == null) continue;
 
-                player.PrintToCenterHtml(text);
+                player.PrintToCenter(text);
             }
         }
 

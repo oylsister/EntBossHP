@@ -1,0 +1,9 @@
+{
+	"MathCounter" : [
+		{
+			"name": "The Boss",
+			"mathcounter": "st2_boss_hp",
+			"mathcounter_mode": 1	
+		}
+	]
+}
