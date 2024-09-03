@@ -750,6 +750,8 @@ namespace EntBossHP
             if (entity.Playerhit.Count < 0)
                 return;
 
+            var removeList = new List<CCSPlayerController>();
+
             // Remove Player from list of Entity hit so they can count.
             foreach(var player in entity.Playerhit)
             {
@@ -761,17 +763,31 @@ namespace EntBossHP
                     {
                         // player doesn't hit entity more than 2 seconds then remove it.
                         if (clientData.LastShootHitBox < Server.EngineTime - 5.0f)
-                            entity.Playerhit.Remove(player);
+                        {
+                            // add them to the list that need to be delete. because editing the list during the loop might cause error.
+                            removeList.Add(player);
+                        }
 
                         // if not then
                         else
                         {
                             // if no player hit it enough then let's just print hp to specific player that hit it.
-                            if(!overCount && clientData.LastShootHitBox > Server.EngineTime - 5.0f)
+                            if (!overCount && clientData.LastShootHitBox > Server.EngineTime - 5.0f)
                                 Print_BHudClient(player, entity);
                         }
                     }
                 }
+            }
+
+            // loop delete player.
+            foreach(var player in removeList)
+            {
+                // nah just pass it over.
+                if(player == null) continue;
+
+                // found it, delete it.
+                if(entity.Playerhit.Contains(player))
+                    entity.Playerhit.Remove(player);
             }
         }
 
