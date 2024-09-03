@@ -516,7 +516,7 @@ namespace EntBossHP
             ClientDisplayDatas[client].BossHP = values;
             ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
-            if (activeBosses.Count < 1)
+            if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
                 Print_BHud(EntityDatas[caller]);
 
             // Server.PrintToChatAll($"activator = {activator.DesignerName} | caller = {caller.DesignerName}");
@@ -614,8 +614,8 @@ namespace EntBossHP
                 ClientDisplayDatas[client].BossHP = hp;
                 ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
-                if (activeBosses.Count < 1)
-                    Print_BHud(EntityDatas[caller]);
+            if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
+                Print_BHud(EntityDatas[caller]);
 
                 //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
             }
@@ -714,8 +714,8 @@ namespace EntBossHP
                 ClientDisplayDatas[client].BossHP = hp;
                 ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
-                if (activeBosses.Count < 1)
-                    Print_BHud(EntityDatas[caller]);
+            if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
+                Print_BHud(EntityDatas[caller]);
 
                 //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
             }
