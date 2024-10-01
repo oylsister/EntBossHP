@@ -1,6 +1,7 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,7 @@ namespace EntBossHP
     public class EntBossHP : BasePlugin
     {
         public override string ModuleName => "EntBossHP";
-        public override string ModuleVersion => "1.3";
+        public override string ModuleVersion => "1.4";
         public override string ModuleAuthor => "Oylsister, Credits to Kxrnl, DarkerZ [RUS]";
 
         public Dictionary<CCSPlayerController, ClientDisplayData> ClientDisplayDatas { get; set; } = new Dictionary<CCSPlayerController, ClientDisplayData>();
@@ -29,6 +30,8 @@ namespace EntBossHP
         public BossConfig BossConfigs;
         public double CurrentTime;
         public double LastForceShowBossHP;
+
+        public FakeConVar<bool> cvarEnableBhud = new("css_bosshp_enablebhud", "Enable bhud to print all entity that get damaged", true, ConVarFlags.FCVAR_NONE);
 
         public override void Load(bool hotReload)
         {
@@ -725,6 +728,10 @@ namespace EntBossHP
 
         private void Print_BHud(EntityData entity)
         {
+            // if feature is not enabled then don't do it.
+            if (!IsBhudEnabled())
+                return;
+
             // if there is bossHP active now, don't show until it's clear;
             if (activeBosses != null && activeBosses.Count > 0)
                 return;
@@ -959,6 +966,11 @@ namespace EntBossHP
         {
             var offset = Schema.GetSchemaOffset("CMathCounter", "m_OutValue");
             return *(float*)IntPtr.Add(handle, offset + 24);
+        }
+
+        private bool IsBhudEnabled()
+        {
+            return cvarEnableBhud.Value;
         }
     }
 }
