@@ -1,0 +1,30 @@
+{
+	"MathCounter" : [
+		{
+			"name": "Boss 1", // boss name to display in center text.
+			"mathcounter": "mathcounter_entityname", // entity name of boss
+			"mathcounter_mode": 1 // 1 = normal (subtract) | 2 = reverse (add)	
+		},
+		{
+			"name": "Boss 2",
+			"mathcounter": "mathcounter_entityname_2",
+			"mathcounter_mode": 2
+		}
+	],
+	"Breakable": [
+		{
+			"name": "Boss 3",
+			"breakable": "breakable_entityname" // entity name of breakable boss
+		}
+	],
+	"HPBar": [
+		{
+			"name": "Boss 4",
+			"mathcounter": "mathcounter_entityname_3",
+			"mathcounter_mode": 1, // 1 = normal (subtract) | 2 = reverse (add)	
+			"iterator": "iterator_entityname",
+			"iterator_mode": 1,  // 1 = normal (subtract) | 2 = reverse (add)	
+			"backup": "backup_entityname" 
+		}
+	]
+}
