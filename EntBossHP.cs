@@ -366,6 +366,9 @@ namespace EntBossHP
             if (caller == null)
                 return HookResult.Continue;
 
+            if(activator.DesignerName != "player")
+                return HookResult.Continue;
+
             var entityname = caller.Entity.Name;
 
             if (string.IsNullOrEmpty(entityname) || string.IsNullOrWhiteSpace(entityname))
@@ -532,6 +535,9 @@ namespace EntBossHP
             if (caller == null)
                 return HookResult.Continue;
 
+            if (activator.DesignerName != "player")
+                return HookResult.Continue;
+
             CBreakable prop = new CBreakable(caller.Handle);
 
             var entityname = caller.Entity.Name;
@@ -629,6 +635,9 @@ namespace EntBossHP
         public HookResult Hitbox_Hook(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
         {
             if (caller == null)
+                return HookResult.Continue;
+
+            if (activator.DesignerName != "player")
                 return HookResult.Continue;
 
             CBreakable prop = new CBreakable(caller.Handle);
