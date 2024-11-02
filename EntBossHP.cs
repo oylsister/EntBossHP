@@ -453,12 +453,12 @@ namespace EntBossHP
 
                         if(boss.MathCounterHitMode == 1)
                         {
-                            boss.Health = (int)Math.Round((values - prop.Min) + (boss.IteratorValue * boss.BackupValue));
+                            boss.Health = (int)Math.Round((values - prop.Min) + (boss.IteratorValue - 1 * boss.BackupValue));
                         }
 
                         else
                         {
-                            boss.Health = (int)Math.Round((prop.Max - values) + (boss.IteratorValue * boss.BackupValue));
+                            boss.Health = (int)Math.Round((prop.Max - values) + (boss.IteratorValue - 1 * boss.BackupValue));
                         }
 
                         if(boss.MaxHealth < boss.Health)
