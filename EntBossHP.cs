@@ -416,8 +416,14 @@ namespace EntBossHP
                         }
                         else
                         {
+                            boss.MaxHealth = (int)Math.Round(prop.Max);
                             boss.Health = boss.MaxHealth - values;
                         }
+
+                        if (boss.LastHP > boss.Health)
+                            Print_BossHP();
+
+                        boss.LastHP = boss.Health;
 
                         if (!activeBosses.ContainsKey(boss.MathCounterName))
                         {
@@ -463,6 +469,11 @@ namespace EntBossHP
                         if(boss.MaxHealth < boss.Health)
                             boss.MaxHealth = boss.Health;
 
+                        if (boss.LastHP > boss.Health)
+                            Print_BossHP();
+
+                        boss.LastHP = boss.Health;
+
                         if (!activeBosses.ContainsKey(boss.MathCounterName))
                             activeBosses.Add(boss.MathCounterName, boss);
 
@@ -488,7 +499,6 @@ namespace EntBossHP
                         boss.BackupValue = values;
                     }
                 }
-                Print_BossHP();
             }
 
             if (!EntityDatas.ContainsKey(caller))
@@ -577,6 +587,11 @@ namespace EntBossHP
                                 boss.MaxHealth = boss.Health;
                             }
 
+                            if (boss.LastHP > boss.Health)
+                                Print_BossHP();
+
+                            boss.LastHP = boss.Health;
+
                             if (!activeBosses.ContainsKey(boss.BreakableEntityName))
                                 activeBosses.Add(boss.BreakableEntityName, boss);
 
@@ -588,7 +603,6 @@ namespace EntBossHP
                             }
                         }
                     }
-                    Print_BossHP();
                 }
 
                 if (!EntityDatas.ContainsKey(caller))
@@ -678,6 +692,11 @@ namespace EntBossHP
                                 boss.MaxHealth = boss.Health;
                             }
 
+                            if(boss.LastHP > boss.Health)
+                                Print_BossHP();
+
+                            boss.LastHP = boss.Health;
+
                             if (!activeBosses.ContainsKey(boss.BreakableEntityName))
                                 activeBosses.Add(boss.BreakableEntityName, boss);
 
@@ -689,8 +708,6 @@ namespace EntBossHP
                             }
                         }
                     }
-
-                    Print_BossHP();
                 }
 
                 if (!EntityDatas.ContainsKey(caller))
