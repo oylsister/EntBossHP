@@ -24,7 +24,7 @@ namespace EntBossHP
         public List<MathCounterBoss> mathCounterBosses = new List<MathCounterBoss>();
         public List<HPBarBoss> hpBarBosses = new List<HPBarBoss>();
 
-        public List<BossData> activeBosses;
+        public Dictionary<string, BossData> activeBosses;
         bool configLoaded = false;
 
         public BossConfig BossConfigs;
@@ -177,7 +177,7 @@ namespace EntBossHP
             {
                 Server.PrintToChatAll($" {ChatColors.Olive}[{ChatColors.Lime}EntBossHP{ChatColors.Olive}] {ChatColors.White}The current map is supported by this plugin.");
 
-                if (activeBosses != null)
+                if (activeBosses != null || activeBosses.Count > 0)
                     activeBosses.Clear();
 
                 ResetBossHP();
@@ -389,14 +389,14 @@ namespace EntBossHP
                 {
                     if (caller.Entity.Name == boss.MathCounterName)
                     {
-                        if (values == 0)
+                        if (values <= 0)
                         {
                             //Server.PrintToChatAll($"{caller.Entity.Name} is 0");
 
-                            if (activeBosses.Contains(boss))
+                            if (activeBosses.ContainsKey(boss.MathCounterName))
                             {
                                 //Server.PrintToChatAll($"{caller.Entity.Name} get removed!");
-                                activeBosses.Remove(boss);
+                                activeBosses.Remove(boss.MathCounterName);
                             }
 
                             continue;
@@ -419,19 +419,18 @@ namespace EntBossHP
                             boss.Health = boss.MaxHealth - values;
                         }
 
-                        if (!activeBosses.Contains(boss))
+                        if (!activeBosses.ContainsKey(boss.MathCounterName))
                         {
                             //Server.PrintToChatAll($"{caller.Entity.Name} get added to list!");
-                            activeBosses.Add(boss);
+                            activeBosses.Add(boss.MathCounterName, boss);
                         }
 
                         else
                         {
                             //Server.PrintToChatAll($"{caller.Entity.Name} get updated");
-                            var index = activeBosses.IndexOf(boss);
-                            activeBosses[index].Health = boss.Health;
-                            activeBosses[index].MaxHealth = boss.MaxHealth;
-                            activeBosses[index].LastHit = boss.LastHit;
+                            activeBosses[boss.MathCounterName].Health = boss.Health;
+                            activeBosses[boss.MathCounterName].MaxHealth = boss.MaxHealth;
+                            activeBosses[boss.MathCounterName].LastHit = boss.LastHit;
                         }
                     }
                 }
@@ -442,8 +441,8 @@ namespace EntBossHP
                     {
                         if (values == 0)
                         {
-                            if (activeBosses.Contains(boss))
-                                activeBosses.Remove(boss);
+                            if (activeBosses.ContainsKey(boss.MathCounterName))
+                                activeBosses.Remove(boss.MathCounterName);
 
                             continue;
                         }
@@ -464,15 +463,14 @@ namespace EntBossHP
                         if(boss.MaxHealth < boss.Health)
                             boss.MaxHealth = boss.Health;
 
-                        if (!activeBosses.Contains(boss))
-                            activeBosses.Add(boss);
+                        if (!activeBosses.ContainsKey(boss.MathCounterName))
+                            activeBosses.Add(boss.MathCounterName, boss);
 
                         else
                         {
-                            var index = activeBosses.IndexOf(boss);
-                            activeBosses[index].Health = boss.Health;
-                            activeBosses[index].MaxHealth = boss.MaxHealth;
-                            activeBosses[index].LastHit = boss.LastHit;
+                            activeBosses[boss.MathCounterName].Health = boss.Health;
+                            activeBosses[boss.MathCounterName].MaxHealth = boss.MaxHealth;
+                            activeBosses[boss.MathCounterName].LastHit = boss.LastHit;
                         }
                     }
 
@@ -564,8 +562,8 @@ namespace EntBossHP
                         {
                             if (hp <= 0)
                             {
-                                if (activeBosses.Contains(boss))
-                                    activeBosses.Remove(boss);
+                                if (activeBosses.ContainsKey(boss.BreakableEntityName))
+                                    activeBosses.Remove(boss.BreakableEntityName);
 
                                 continue;
                             }
@@ -579,15 +577,14 @@ namespace EntBossHP
                                 boss.MaxHealth = boss.Health;
                             }
 
-                            if (!activeBosses.Contains(boss))
-                                activeBosses.Add(boss);
+                            if (!activeBosses.ContainsKey(boss.BreakableEntityName))
+                                activeBosses.Add(boss.BreakableEntityName, boss);
 
                             else
                             {
-                                var index = activeBosses.IndexOf(boss);
-                                activeBosses[index].Health = boss.Health;
-                                activeBosses[index].MaxHealth = boss.MaxHealth;
-                                activeBosses[index].LastHit = boss.LastHit;
+                                activeBosses[boss.BreakableEntityName].Health = boss.Health;
+                                activeBosses[boss.BreakableEntityName].MaxHealth = boss.MaxHealth;
+                                activeBosses[boss.BreakableEntityName].LastHit = boss.LastHit;
                             }
                         }
                     }
@@ -666,8 +663,8 @@ namespace EntBossHP
                         {
                             if (hp <= 0)
                             {
-                                if (activeBosses.Contains(boss))
-                                    activeBosses.Remove(boss);
+                                if (activeBosses.ContainsKey(boss.BreakableEntityName))
+                                    activeBosses.Remove(boss.BreakableEntityName);
 
                                 continue;
                             }
@@ -681,15 +678,14 @@ namespace EntBossHP
                                 boss.MaxHealth = boss.Health;
                             }
 
-                            if (!activeBosses.Contains(boss))
-                                activeBosses.Add(boss);
+                            if (!activeBosses.ContainsKey(boss.BreakableEntityName))
+                                activeBosses.Add(boss.BreakableEntityName, boss);
 
                             else
                             {
-                                var index = activeBosses.IndexOf(boss);
-                                activeBosses[index].Health = boss.Health;
-                                activeBosses[index].MaxHealth = boss.MaxHealth;
-                                activeBosses[index].LastHit = boss.LastHit;
+                                activeBosses[boss.BreakableEntityName].Health = boss.Health;
+                                activeBosses[boss.BreakableEntityName].MaxHealth = boss.MaxHealth;
+                                activeBosses[boss.BreakableEntityName].LastHit = boss.LastHit;
                             }
                         }
                     }
@@ -833,7 +829,7 @@ namespace EntBossHP
 
             string message = "";
 
-            foreach (var boss in activeBosses)
+            foreach (var boss in activeBosses.Values)
             {
                 var count = 0;
                 if (activeBosses.Count > 1)
