@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntBossHP", "EntBossHP.csproj", "{A3EDB1D5-171E-4FD4-B11E-DB48ABDAF53D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntBossHP", "EntBossHP.csproj", "{A3EDB1D5-171E-4FD4-B11E-DB48ABDAF53D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{03752CAA-E85E-40D5-BC8B-E21349FF5E01}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -888,6 +888,9 @@ namespace EntBossHP
 
             foreach (var boss in activeBosses.Values)
             {
+                if (boss.Health < 0)
+                    continue;
+
                 var count = 0;
                 if (activeBosses.Count > 1)
                 {
@@ -916,6 +919,9 @@ namespace EntBossHP
                 return;
 
             if (activeBosses == null || activeBosses.Count < 1)
+                return;
+
+            if (boss.Health < 0)
                 return;
 
             var message = $"{boss.BossName} : {boss.Health}\n{CalculateHPBar(boss.Health, boss.MaxHealth)}";
