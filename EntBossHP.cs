@@ -861,12 +861,22 @@ namespace EntBossHP
         { 
             if (client == null) return;
 
-            client.PrintToCenter($"{data.Name}: {data.Health}");
+            var hp = data.Health;
+
+            if(hp < 0)
+                hp = Math.Abs(data.Health);
+
+            client.PrintToCenter($"{data.Name}: {hp}");
         }
 
         private void Print_BHudAll(EntityData data)
         {
-            PrintToCenterAll($"{data.Name}: {data.Health}");
+            var hp = data.Health;
+
+            if (hp < 0)
+                hp = Math.Abs(data.Health);
+
+            PrintToCenterAll($"{data.Name}: {hp}");
         }
 
         private void Print_BHudLocal(CCSPlayerController client, ClientDisplayData data)
