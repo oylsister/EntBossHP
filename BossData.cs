@@ -15,6 +15,7 @@ namespace EntBossHP
         public string BossName { get; set; }
         public int Health { get; set; }
         public int MaxHealth { get; set; }
+        public int LastHP { get; set; }
         public double LastHit { get; set; }
         public BossType Type { get; set; }
     }

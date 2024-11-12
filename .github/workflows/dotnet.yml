@@ -51,6 +51,8 @@ jobs:
 
         # Copy plugins folder
         cp -r /home/runner/work/EntBossHP/EntBossHP/bin/Debug/net8.0/ release/addons/counterstrikesharp/plugins/
+        cp -r /home/runner/work/EntBossHP/EntBossHP/build/addons/counterstrikesharp/configs/ release/addons/counterstrikesharp/
+        cp -r /home/runner/work/EntBossHP/EntBossHP/build/cfg/ release/
 
         # Change Directory
         mv release/addons/counterstrikesharp/plugins/net8.0/ release/addons/counterstrikesharp/plugins/EntBossHP/
