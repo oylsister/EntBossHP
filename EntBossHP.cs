@@ -32,6 +32,7 @@ namespace EntBossHP
         public double LastForceShowBossHP;
 
         public FakeConVar<bool> cvarEnableBhud = new("css_bosshp_enablebhud", "Enable bhud to print all entity that get damaged", true, ConVarFlags.FCVAR_NONE);
+        public FakeConVar<bool> cvarMultiBossHP = new("css_bosshp_multihp", "Showing multi boss hp in single Center text", false, ConVarFlags.FCVAR_NONE);
 
         public override void Load(bool hotReload)
         {
@@ -61,21 +62,48 @@ namespace EntBossHP
 
         public void MapStart(string mapname)
         {
+            LoadConfigBasedMap(mapname);
+            ExecuteConfigFile();
+        }
+
+        public void LoadConfigBasedMap(string mapname)
+        {
             var configPath = Path.Combine(ModuleDirectory, $"../../configs/bosshp/{mapname}.jsonc");
 
-            if(!File.Exists(configPath))
+            if (!File.Exists(configPath))
             {
                 Logger.LogInformation($"Couldn't Find {configPath}");
                 configLoaded = false;
                 return;
             }
-            
+
             BossConfigs = JsonConvert.DeserializeObject<BossConfig>(File.ReadAllText(configPath));
             Logger.LogInformation($"Loaded Boss Config {configPath}");
             configLoaded = true;
 
             BossDataLoading();
             activeBosses = new();
+        }
+
+        private void ExecuteConfigFile()
+        {
+            var configFolder = Path.Combine(Server.GameDirectory, "csgo/cfg/entbosshp/");
+
+            if (!Directory.Exists(configFolder))
+            {
+                Logger.LogError($"[EntBossHP] Couldn't find directory {configFolder}");
+                return;
+            }
+
+            var configPath = Path.Combine(configFolder, "entbosshp.cfg");
+
+            if (!File.Exists(configPath))
+            {
+                Logger.LogInformation($"[EntBossHP] Couldn't find config file {configPath}");
+                return;
+            }
+
+            Server.ExecuteCommand("exec entbosshp/entbosshp.cfg");
         }
 
         private void BossDataLoading()
@@ -533,6 +561,9 @@ namespace EntBossHP
             if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
                 Print_BHud(EntityDatas[caller]);
 
+            else
+                Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
+
             // Server.PrintToChatAll($"activator = {activator.DesignerName} | caller = {caller.DesignerName}");
 
             return HookResult.Continue;
@@ -634,8 +665,11 @@ namespace EntBossHP
                 ClientDisplayDatas[client].BossHP = hp;
                 ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
-            if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
-                Print_BHud(EntityDatas[caller]);
+                if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
+                    Print_BHud(EntityDatas[caller]);
+
+                else
+                    Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
 
                 //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
             }
@@ -739,8 +773,11 @@ namespace EntBossHP
                 ClientDisplayDatas[client].BossHP = hp;
                 ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
-            if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
-                Print_BHud(EntityDatas[caller]);
+                if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
+                    Print_BHud(EntityDatas[caller]);
+
+                else
+                    Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
 
                 //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
             }
@@ -841,6 +878,9 @@ namespace EntBossHP
 
         private void Print_BossHP()
         {
+            if (!ShowingMultiBoss())
+                return;
+
             if (activeBosses.Count < 1)
                 return;
 
@@ -868,6 +908,18 @@ namespace EntBossHP
             }
 
             PrintToCenterAll(message);
+        }
+
+        private void Print_SingleBossHP(CCSPlayerController client, BossData boss)
+        {
+            if (ShowingMultiBoss())
+                return;
+
+            if (activeBosses == null || activeBosses.Count < 1)
+                return;
+
+            var message = $"{boss.BossName} : {boss.Health}\n{CalculateHPBar(boss.Health, boss.MaxHealth)}";
+            client.PrintToCenter(message);
         }
 
         private string CalculateHPBar(int hp, int maxhp)
@@ -993,6 +1045,11 @@ namespace EntBossHP
         private bool IsBhudEnabled()
         {
             return cvarEnableBhud.Value;
+        }
+
+        private bool ShowingMultiBoss()
+        {
+            return cvarMultiBossHP.Value;
         }
     }
 }

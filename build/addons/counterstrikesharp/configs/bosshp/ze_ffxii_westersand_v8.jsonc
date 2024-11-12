@@ -1,0 +1,39 @@
+{
+	"HPBar" : [
+		{
+			"name": "Boss",
+			"mathcounter": "Boss_Health",
+			"mathcounter_mode": 1, 
+			"iterator": "Boss_Overlay_Counter",
+			"iterator_mode": 2,  
+			"backup": "Boss_Health_Init" 
+		}	
+	],		
+	"Breakable" : [
+		{
+			"name": "Chaos",
+			"breakable": "Espers_Chaos_Physbox"
+		},		
+		{
+			"name": "Mateus",
+			"breakable": "Espers_Mateus_Physbox"
+		},		
+		{
+			"name": "Belias",
+			"breakable": "Espers_Belias_Physbox"
+		},		
+		{
+			"name": "Chaos",
+			"breakable": "Chaos_Summon_Physbox"
+		},		
+		{
+			"name": "Belias",
+			"breakable": "Belias_Summon_Physbox"
+		},		
+		{
+			"name": "Mateus",
+			"breakable": "Mateus_Summon_Physbox"
+		}			
+	]
+}
+

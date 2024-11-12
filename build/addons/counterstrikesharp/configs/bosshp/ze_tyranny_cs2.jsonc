@@ -1,0 +1,84 @@
+{
+	"HPBar" : [
+		{
+			"name": "Spider",
+			"mathcounter": "bosslvl1_counter1",
+			"mathcounter_mode": 1, 
+			"iterator": "bosslvl1_counter3",
+			"iterator_mode": 1,  
+			"backup": "bosslvl1_counter2" 
+		},		
+		{
+			"name": "Troll",
+			"mathcounter": "bosslvl2_counter1",
+			"mathcounter_mode": 1, 
+			"iterator": "bosslvl2_counter3",
+			"iterator_mode": 1,  
+			"backup": "bosslvl2_counter2" 
+		},		
+		{
+			"name": "Dragon",
+			"mathcounter": "bosslvl2_end_counter1",
+			"mathcounter_mode": 1, 
+			"iterator": "bosslvl2_end_counter3",
+			"iterator_mode": 1,  
+			"backup": "bosslvl2_end_counter2" 
+		},		
+		{
+			"name": "Dragon",
+			"mathcounter": "bosslvl3_counter1",
+			"mathcounter_mode": 1, 
+			"iterator": "bosslvl3_counter3",
+			"iterator_mode": 1,  
+			"backup": "bosslvl3_counter2" 
+		},		
+		{
+			"name": "Dragon",
+			"mathcounter": "bosslvl3_end_counter1",
+			"mathcounter_mode": 1, 
+			"iterator": "bosslvl3_end_counter3",
+			"iterator_mode": 1,  
+			"backup": "bosslvl3_end_counter2" 
+		},		
+		{
+			"name": "Gargantua",
+			"mathcounter": "bosslvl4_counter1",
+			"mathcounter_mode": 1, 
+			"iterator": "bosslvl4_counter3",
+			"iterator_mode": 1,  
+			"backup": "bosslvl4_counter2" 
+		},		
+		{
+			"name": "Balrog",
+			"mathcounter": "bosslvl5_counter1",
+			"mathcounter_mode": 1, 
+			"iterator": "bosslvl5_counter3",
+			"iterator_mode": 1,  
+			"backup": "bosslvl5_counter2" 
+		},		
+		{
+			"name": "Dragon",
+			"mathcounter": "bosslvl5_end_counter1",
+			"mathcounter_mode": 1, 
+			"iterator": "bosslvl5_end_counter3",
+			"iterator_mode": 1,  
+			"backup": "bosslvl5_end_counter2" 
+		},		
+		{
+			"name": "Gargantua",
+			"mathcounter": "bosslvl5_garg_counter1",
+			"mathcounter_mode": 1, 
+			"iterator": "bosslvl5_garg_counter3",
+			"iterator_mode": 1,  
+			"backup": "bosslvl5_garg_counter2" 
+		}
+	],
+	"MathCounter" : [		
+		{
+			"name": "Balrog",
+			"mathcounter": "bosslvl5_laser_counter",
+			"mathcounter_mode": 1	
+		}	
+	]
+}
+
