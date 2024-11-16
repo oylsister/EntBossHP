@@ -397,6 +397,14 @@ namespace EntBossHP
             if(activator.DesignerName != "player")
                 return HookResult.Continue;
 
+            if(activator == null)
+                return HookResult.Continue;
+
+            var client = player(activator);
+
+            if (client == null)
+                return HookResult.Continue;
+
             var entityname = caller.Entity.Name;
 
             if (string.IsNullOrEmpty(entityname) || string.IsNullOrWhiteSpace(entityname))
@@ -498,7 +506,10 @@ namespace EntBossHP
                             boss.MaxHealth = boss.Health;
 
                         if (boss.LastHP > boss.Health)
+                        {
                             Print_BossHP();
+                            Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
+                        }
 
                         boss.LastHP = boss.Health;
 
@@ -536,14 +547,6 @@ namespace EntBossHP
             EntityDatas[caller].Health = values;
             EntityDatas[caller].LastHit = Server.EngineTime;
 
-            if (activator == null)
-                return HookResult.Continue;
-
-            var client = player(activator);
-
-            if (client == null)
-                return HookResult.Continue;
-
             if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
                 return HookResult.Continue;
 
@@ -575,6 +578,14 @@ namespace EntBossHP
                 return HookResult.Continue;
 
             if (activator.DesignerName != "player")
+                return HookResult.Continue;
+
+            if (activator == null)
+                return HookResult.Continue;
+
+            var client = player(activator);
+
+            if (client == null)
                 return HookResult.Continue;
 
             CBreakable prop = new CBreakable(caller.Handle);
@@ -619,7 +630,10 @@ namespace EntBossHP
                             }
 
                             if (boss.LastHP > boss.Health)
+                            {
                                 Print_BossHP();
+                                Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
+                            }
 
                             boss.LastHP = boss.Health;
 
@@ -643,14 +657,6 @@ namespace EntBossHP
                 EntityDatas[caller].Name = entityname;
                 EntityDatas[caller].Health = hp;
                 EntityDatas[caller].LastHit = Server.EngineTime;
-
-                if (activator == null)
-                    return HookResult.Continue;
-
-                var client = player(activator);
-
-                if (client == null)
-                    return HookResult.Continue;
 
                 if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
                     return HookResult.Continue;
@@ -683,6 +689,14 @@ namespace EntBossHP
                 return HookResult.Continue;
 
             if (activator.DesignerName != "player")
+                return HookResult.Continue;
+
+            if (activator == null)
+                return HookResult.Continue;
+
+            var client = player(activator);
+
+            if (client == null)
                 return HookResult.Continue;
 
             CBreakable prop = new CBreakable(caller.Handle);
@@ -726,8 +740,11 @@ namespace EntBossHP
                                 boss.MaxHealth = boss.Health;
                             }
 
-                            if(boss.LastHP > boss.Health)
+                            if (boss.LastHP > boss.Health)
+                            {
                                 Print_BossHP();
+                                Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
+                            }
 
                             boss.LastHP = boss.Health;
 
@@ -752,14 +769,6 @@ namespace EntBossHP
                 EntityDatas[caller].Health = hp;
                 EntityDatas[caller].LastHit = Server.EngineTime;
 
-                if (activator == null)
-                    return HookResult.Continue;
-
-                var client = player(activator);
-
-                if (client == null)
-                    return HookResult.Continue;
-
                 if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
                     return HookResult.Continue;
 
@@ -775,9 +784,6 @@ namespace EntBossHP
 
                 if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
                     Print_BHud(EntityDatas[caller]);
-
-                else
-                    Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
 
                 //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
             }
