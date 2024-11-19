@@ -67,7 +67,7 @@ jobs:
     - name: Zip File
       run: |
         cd release
-        zip -r "EntBossHP_${{ env.FILE_VER }}.zip" addons
+        zip -r "EntBossHP_${{ env.FILE_VER }}.zip" addons cfg
 
     - name: Create GitHub Release
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
