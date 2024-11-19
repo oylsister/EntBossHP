@@ -14,7 +14,7 @@ namespace EntBossHP
     public class EntBossHP : BasePlugin
     {
         public override string ModuleName => "EntBossHP";
-        public override string ModuleVersion => "1.4";
+        public override string ModuleVersion => "1.5";
         public override string ModuleAuthor => "Oylsister, Credits to Kxrnl, DarkerZ [RUS]";
 
         public Dictionary<CCSPlayerController, ClientDisplayData> ClientDisplayDatas { get; set; } = new Dictionary<CCSPlayerController, ClientDisplayData>();
@@ -397,13 +397,7 @@ namespace EntBossHP
             if(activator.DesignerName != "player")
                 return HookResult.Continue;
 
-            if(activator == null)
-                return HookResult.Continue;
-
             var client = player(activator);
-
-            if (client == null)
-                return HookResult.Continue;
 
             var entityname = caller.Entity.Name;
 
@@ -457,7 +451,12 @@ namespace EntBossHP
                         }
 
                         if (boss.LastHP > boss.Health)
+                        {
                             Print_BossHP();
+
+                            if (activator != null && client != null && activeBosses.ContainsKey(caller.Entity.Name))
+                                Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
+                        }
 
                         boss.LastHP = boss.Health;
 
@@ -508,7 +507,9 @@ namespace EntBossHP
                         if (boss.LastHP > boss.Health)
                         {
                             Print_BossHP();
-                            Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
+
+                            if (activator != null && client != null && activeBosses.ContainsKey(caller.Entity.Name))
+                                Print_SingleBossHP(client, boss);
                         }
 
                         boss.LastHP = boss.Health;
@@ -547,6 +548,12 @@ namespace EntBossHP
             EntityDatas[caller].Health = values;
             EntityDatas[caller].LastHit = Server.EngineTime;
 
+            if (activator == null)
+                return HookResult.Continue;
+
+            if (client == null)
+                return HookResult.Continue;
+
             if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
                 return HookResult.Continue;
 
@@ -563,9 +570,6 @@ namespace EntBossHP
 
             if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
                 Print_BHud(EntityDatas[caller]);
-
-            else
-                Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
 
             // Server.PrintToChatAll($"activator = {activator.DesignerName} | caller = {caller.DesignerName}");
 
@@ -632,7 +636,9 @@ namespace EntBossHP
                             if (boss.LastHP > boss.Health)
                             {
                                 Print_BossHP();
-                                Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
+
+                                if (activator != null && client != null && activeBosses.ContainsKey(caller.Entity.Name))
+                                    Print_SingleBossHP(client, boss);
                             }
 
                             boss.LastHP = boss.Health;
@@ -658,6 +664,12 @@ namespace EntBossHP
                 EntityDatas[caller].Health = hp;
                 EntityDatas[caller].LastHit = Server.EngineTime;
 
+                if (activator == null)
+                    return HookResult.Continue;
+
+                if (client == null)
+                    return HookResult.Continue;
+
                 if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
                     return HookResult.Continue;
 
@@ -674,9 +686,6 @@ namespace EntBossHP
                 if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
                     Print_BHud(EntityDatas[caller]);
 
-                else
-                    Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
-
                 //Server.PrintToChatAll($"{caller.Entity.Name}: {hp}");
             }
 
@@ -691,13 +700,7 @@ namespace EntBossHP
             if (activator.DesignerName != "player")
                 return HookResult.Continue;
 
-            if (activator == null)
-                return HookResult.Continue;
-
             var client = player(activator);
-
-            if (client == null)
-                return HookResult.Continue;
 
             CBreakable prop = new CBreakable(caller.Handle);
 
@@ -743,7 +746,9 @@ namespace EntBossHP
                             if (boss.LastHP > boss.Health)
                             {
                                 Print_BossHP();
-                                Print_SingleBossHP(client, activeBosses[caller.Entity.Name]);
+
+                                if(activator != null && client != null && activeBosses.ContainsKey(caller.Entity.Name))
+                                    Print_SingleBossHP(client, boss);
                             }
 
                             boss.LastHP = boss.Health;
@@ -768,6 +773,12 @@ namespace EntBossHP
                 EntityDatas[caller].Name = entityname;
                 EntityDatas[caller].Health = hp;
                 EntityDatas[caller].LastHit = Server.EngineTime;
+
+                if (activator == null)
+                    return HookResult.Continue;
+
+                if (client == null)
+                    return HookResult.Continue;
 
                 if (!activator.IsValid || !ClientDisplayDatas.ContainsKey(client))
                     return HookResult.Continue;
@@ -904,7 +915,7 @@ namespace EntBossHP
 
             foreach (var boss in activeBosses.Values)
             {
-                if (boss.Health < 0)
+                if (boss.Health <= 0)
                     continue;
 
                 var count = 0;
@@ -937,7 +948,7 @@ namespace EntBossHP
             if (activeBosses == null || activeBosses.Count < 1)
                 return;
 
-            if (boss.Health < 0)
+            if (boss.Health <= 0)
                 return;
 
             var message = $"{boss.BossName} : {boss.Health}\n{CalculateHPBar(boss.Health, boss.MaxHealth)}";
