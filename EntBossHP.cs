@@ -37,6 +37,8 @@ namespace EntBossHP
         public override void Load(bool hotReload)
         {
             HookEntityOutput("math_counter", "OutValue", CounterOut);
+            HookEntityOutput("math_counter", "OnHitMin", OnHitHpBar);
+            HookEntityOutput("math_counter", "OnHitMax", OnHitHpBar);
             HookEntityOutput("func_physbox_multiplayer", "OnDamaged", BreakableOut);
             HookEntityOutput("func_physbox", "OnHealthChanged", BreakableOut);
             HookEntityOutput("func_breakable", "OnHealthChanged", BreakableOut);
@@ -387,6 +389,31 @@ namespace EntBossHP
                     }
                 }
             }
+        }
+
+        public HookResult OnHitHpBar(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
+        {
+            if (configLoaded)
+            {
+                foreach (var boss in hpBarBosses)
+                {
+                    if (caller.Entity.Name == boss.MathCounterName)
+                    {
+                        if (activeBosses.ContainsKey(boss.MathCounterName))
+                        {
+                            //Server.PrintToChatAll($"{caller.Entity.Name} get removed!");
+
+                            if (boss.IteratorValue == 0)
+                            {
+                                activeBosses.Remove(boss.MathCounterName);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return HookResult.Continue;
         }
 
         public HookResult CounterOut(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
