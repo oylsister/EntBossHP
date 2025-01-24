@@ -446,19 +446,6 @@ namespace EntBossHP
                 {
                     if (caller.Entity.Name == boss.MathCounterName)
                     {
-                        if (values <= 0)
-                        {
-                            //Server.PrintToChatAll($"{caller.Entity.Name} is 0");
-
-                            if (activeBosses.ContainsKey(boss.MathCounterName))
-                            {
-                                //Server.PrintToChatAll($"{caller.Entity.Name} get removed!");
-                                activeBosses.Remove(boss.MathCounterName);
-                            }
-
-                            continue;
-                        }
-
                         boss.MathCounterEntity = caller;
                         boss.LastHit = Server.EngineTime;
 
@@ -507,14 +494,6 @@ namespace EntBossHP
                 {
                     if (caller.Entity.Name == boss.MathCounterName)
                     {
-                        if (values == 0)
-                        {
-                            if (activeBosses.ContainsKey(boss.MathCounterName))
-                                activeBosses.Remove(boss.MathCounterName);
-
-                            continue;
-                        }
-
                         boss.MathCounterEntity = caller;
                         boss.LastHit = Server.EngineTime;
 
@@ -631,7 +610,7 @@ namespace EntBossHP
 
             var hp = prop!.Health;
 
-            if (hp < 0)
+            if (hp <= 0)
                 hp = 0;
 
             if (hp < 99999)
@@ -645,10 +624,7 @@ namespace EntBossHP
                         {
                             if (hp <= 0)
                             {
-                                if (activeBosses.ContainsKey(boss.BreakableEntityName))
-                                    activeBosses.Remove(boss.BreakableEntityName);
-
-                                continue;
+                                hp = 0;
                             }
 
                             boss.BreakableEntity = caller;
@@ -755,10 +731,7 @@ namespace EntBossHP
                         {
                             if (hp <= 0)
                             {
-                                if (activeBosses.ContainsKey(boss.BreakableEntityName))
-                                    activeBosses.Remove(boss.BreakableEntityName);
-
-                                continue;
+                                hp = 0;
                             }
 
                             boss.BreakableEntity = caller;
@@ -940,16 +913,21 @@ namespace EntBossHP
 
             string message = "";
 
-            foreach (var boss in activeBosses.Values)
+            List<string> RemoveList = [];
+
+            foreach (var boss in activeBosses)
             {
-                if (boss.Health <= 0)
+                if (boss.Value.Health <= 0)
+                {
+                    RemoveList.Add(boss.Key);
                     continue;
+                }
 
                 var count = 0;
                 if (activeBosses.Count > 1)
                 {
-                    var percent = boss.Health / (boss.MaxHealth / 100);
-                    message += $"{boss.BossName} : {boss.Health} ({percent}%)";
+                    var percent = boss.Value.Health / (boss.Value.MaxHealth / 100);
+                    message += $"{boss.Value.BossName} : {boss.Value.Health} ({percent}%)";
 
                     if(count < activeBosses.Count - 1)
                     {
@@ -960,8 +938,14 @@ namespace EntBossHP
                 }
                 else
                 {
-                    message += $"{boss.BossName} : {boss.Health}\n{CalculateHPBar(boss.Health, boss.MaxHealth)}";
+                    message += $"{boss.Value.BossName} : {boss.Value.Health}\n{CalculateHPBar(boss.Value.Health, boss.Value.MaxHealth)}";
                 }
+            }
+
+            foreach(var key in RemoveList)
+            {
+                if(key != null)
+                    activeBosses.Remove(key);                
             }
 
             PrintToCenterAll(message);
