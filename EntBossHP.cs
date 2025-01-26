@@ -923,6 +923,10 @@ namespace EntBossHP
                     continue;
                 }
 
+                // if HP is getting up, we skip it.
+                if(boss.Value.Health > boss.Value.LastHP)
+                    continue;
+
                 var count = 0;
                 if (activeBosses.Count > 1)
                 {
