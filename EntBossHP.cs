@@ -572,7 +572,6 @@ namespace EntBossHP
             ClientDisplayDatas[client].EntitiyHit = caller;
             ClientDisplayDatas[client].BossName = caller.Entity.Name;
             ClientDisplayDatas[client].BossHP = values;
-            ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
             if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
                 Print_BHud(EntityDatas[caller]);
@@ -599,6 +598,8 @@ namespace EntBossHP
                 return HookResult.Continue;
 
             CBreakable prop = new CBreakable(caller.Handle);
+
+            ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
             var entityname = caller.Entity.Name;
 
@@ -684,7 +685,6 @@ namespace EntBossHP
                 ClientDisplayDatas[client].EntitiyHit = caller;
                 ClientDisplayDatas[client].BossName = caller.Entity.Name;
                 ClientDisplayDatas[client].BossHP = hp;
-                ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
                 if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
                     Print_BHud(EntityDatas[caller]);
@@ -706,6 +706,8 @@ namespace EntBossHP
             var client = player(activator);
 
             CBreakable prop = new CBreakable(caller.Handle);
+
+            ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
             var entityname = caller.Entity.Name;
 
@@ -791,7 +793,6 @@ namespace EntBossHP
                 ClientDisplayDatas[client].EntitiyHit = caller;
                 ClientDisplayDatas[client].BossName = caller.Entity.Name;
                 ClientDisplayDatas[client].BossHP = hp;
-                ClientDisplayDatas[client].LastShootHitBox = Server.EngineTime;
 
                 if (activeBosses == null || (activeBosses != null && activeBosses.Count < 1))
                     Print_BHud(EntityDatas[caller]);
