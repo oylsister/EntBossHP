@@ -3,6 +3,7 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Memory;
+using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -252,13 +253,13 @@ namespace EntBossHP
 
         void PrintToCenterAll(string text)
         {
-            foreach (var player in Utilities.GetPlayers())
-            {
-                // player null lol
-                if (player == null) continue;
+            var rp = new RecipientFilter();
+            rp.AddAllPlayers();
 
-                player.PrintToCenter(text);
-            }
+            var um = UserMessage.FromId(323);
+            um.Recipients = rp;
+            um.SetString("message", text);
+            um.Send();
         }
 
         private static unsafe float GetMathCounterValue(nint handle)
