@@ -210,7 +210,16 @@ namespace EntBossHP
                 // just showing at single player.
                 else
                 {
-                    client.PrintToCenter($"{name}: {hp}");
+                    for(int i = 0; i < Server.MaxPlayers + 1; i++)
+                    {
+                        CCSPlayerController player = Utilities.GetPlayerFromSlot(i);
+
+                        if(player == null || !player.IsValid || player.Connected != PlayerConnectedState.PlayerConnected)
+                            continue;
+
+                        if(LastShootHitbox[player.Slot] > CurrentTime - 7.0 && LastShootBreakable[player.Slot] == entity)
+                            player.PrintToCenter($"{name}: {hp}");
+                    }
                 }
 
                 LastForceShowBossHP = CurrentTime;
